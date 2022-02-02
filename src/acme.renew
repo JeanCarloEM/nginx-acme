@@ -1,0 +1,214 @@
+#!/bin/bash
+
+# -dom :: o dominio
+# -path :: pasta onde serah gravado os certificados
+# -tipo :: opcional ECDSA/RSA
+
+source ./.acme.renew
+
+# DNS - CONFIGURACOES DO CLOUDFLARE, SUBSTITUA
+CF_Key=$(getParam $* "-cfkey")
+CF_Email=$(getParam $* "-cfmail")
+
+# PARAMETROS
+_DOMINIO=$(getParam $* "-dom")
+_CERT_PATH=$(getParam $* "-path")
+_CERT_TIPO=$(getParam $* "-tipo")
+_FORCE=$(getParam $* "-force")
+
+_LOG_PATH="/var/log/letsencrypt"
+_ACME_PATH=""
+
+######################
+# ARRUMANDO OS PATHS #
+######################
+
+# ##
+# PATH
+if [[ ( "$_LOG_PATH" != "" )  && ( ! -d $_LOG_PATH ) ]]; then
+	 mkdir -p $_LOG_PATH
+fi
+
+# ##
+# PATH
+if [[ ( "$_CERT_PATH" != "" )  && ( ! -d $_CERT_PATH ) ]]; then
+	 mkdir -p $_CERT_PATH
+fi
+
+_CERT_BUILDPATH="$_CERT_PATH/build"
+
+# ##
+# BUILD PATH
+if [[ ( -d $_CERT_BUILDPATH ) && ( ! -d $_CERT_BUILDPATH ) ]]; then
+	 mkdir -p $_CERT_BUILDPATH
+else
+	rm -rf "${_CERT_BUILDPATH}/*"
+fi
+
+######################
+# INICIANDO ARQUIVOS #
+######################
+
+# ESTABELECE OS PATHS
+key_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.key"
+csr_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.csr"
+cert_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.cert.pem"
+chain_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.chain.pem"
+ca_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.ca.pem"
+fullchain_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.fullchain.pem"
+
+# O NOME DO CERTIFICADO ORIGINAL
+original_dhparam_file="${_CERT_PATH}/dhparam.pem"
+original_key_file="${_CERT_PATH}/${_CERT_TIPO}.key"
+original_fullchain_file="${_CERT_PATH}/${_CERT_TIPO}.fullchain.pem"
+
+# USADO PARA COPIAR TUDO QUE COMECAO COM O NOME
+cert_raiz_file="${_CERT_BUILDPATH}/${_CERT_TIPO}"
+
+# CRIA A PASTA DE LOG e BACKUP
+DATE=`date +%Y%m%d`
+_LOG_PATH="${_LOG_PATH}/$DATE"
+_BK_PATH="${_CERT_PATH}/.bk/$DATE"
+
+ mkdir -p ${_LOG_PATH}
+ mkdir -p ${_CERT_BUILDPATH}
+
+# VERIFICA SE O CERTIFICADO EXISTE E SE AINDA EH VALIDO
+# CAPITURA O 'return' E NAO O ECHO '='
+# https://stackoverflow.com/questions/7248031/meaning-of-dollar-question-mark-in-shell-scripts
+if [[ ! -z $_FORCE ]]; then
+	_RENOVAR=1
+else	
+	check_cert_still_valid $cert_file
+	_RENOVAR=$?
+fi
+
+#
+#
+#
+title "(Re)criando TLS de '$_DOMINIO'"
+
+LOG "> Tipo.....: $_CERT_TIPO"
+LOG "> Path.....: $_CERT_PATH"
+LOG "> Backup...: ${_BK_PATH}"
+LOG "> Buildpath: $_CERT_BUILDPATH"
+LOG "> LogPath..: ${_LOG_PATH}"
+LOG "> Renovar?.: ${_RENOVAR}"
+
+if [[ ( -z $_RENOVAR ) || ( "$_RENOVAR" = "0" ) ]]; then
+	exit 0
+fi
+
+#
+#
+#
+ATERNAMES="DNS:${_DOMINIO},DNS:*.$_DOMINIO"
+
+if [[ -f ${_CERT_PATH}/.alternativenames ]]; then
+	ATERNAMES="${ATERNAMES},DNS:$(cat ${_CERT_PATH}/.alternativenames | tr --delete '\r' | sed ':a;N;$!ba;s/\n/,DNS:/g')"
+fi
+
+#
+#
+# COMO TANTO PARA RSA QUANTO PARA ECDSA
+CMD_data="-subj '/C=BR/ST=Sao Paulo/CN=$_DOMINIO' -reqexts SAN \
+-config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
+
+
+#
+#
+#
+#
+function self_run(){
+	if [[ ( ! -z "$_DOMINIO" ) && ( ! -z "$_CERT_PATH" ) && ( -d $_CERT_PATH ) && ( -d $_CERT_BUILDPATH ) ]]; then
+		# SE ESPECIFICADO O TIPO
+		if [[ ($_CERT_TIPO = "ECDSA" ) || ($_CERT_TIPO = "RSA" ) ]]; then
+
+			openssl dhparam -out "$original_dhparam_file" 8192
+
+			gen_cert
+
+			# CRIA O FULLCHAIN CASO NAO EXISTA
+			if [[ (! -f $fullchain_file) || (! -s $fullchain_file) ]]; then
+				cat $cert_file $ca_file > $fullchain_file
+			fi
+
+			# VERIFICANDO O CERTIFICADO BUILD, SE EXISTE E ESTAH VALIDO
+			# SE SIM, COPIAMOS PARA _CERT_PATH
+			check_cert_still_valid $fullchain_file
+			_renovar=$?		
+
+			# O CERTIFICADO BUID FOI RENOVADO
+			# COPIA PARA _CERT_PATH
+			if [[ "$_renovar" -eq "0" ]]; then
+				ST "Certificado $motor '$_CERT_TIPO' criado com sucesso. Copiando..."
+				yes |  /bin/cp -f ${cert_raiz_file}.* "$_CERT_PATH/"
+				yes |  /bin/cp -f ${cert_raiz_file}* "$_CERT_PATH/"
+
+				# SE A CHAVE ORIGINAL NAO EXISTIR OU FOR VAZIA
+				if [[ (! -f $original_key_file ) || (! -s $original_key_file ) ]]; then
+					ERR "Arquivo key em BUILD Anormal."
+
+					#REMOVE O KEY VAZIO POR ALGUM MOTIVO
+					yes |  rm -f $original_key_file
+
+					# ... MAS A CHAVE BUILD EXISTIR E FOR FULL
+					if [[ (-f $key_file ) && (-s $key_file ) ]]; then
+						local __counter=0
+
+						# FACA ATE QUE A CHAVE ORIGINAL DEIXE DE VAZIO
+						while [[ ( "$__counter" -le "20" ) &&  ( (! -f $original_key_file ) || (! -s $original_key_file ) ) ]]; do
+							__counter=$((__counter+1))
+							W "Arquivo key permanece vazio, recopiando do build..."
+
+							yes |  /bin/cp -f $key_file "$_CERT_PATH/"
+						done
+
+					# ... MAS A CHAVE BUILD 'BK' EXISTIR E FOR FULL
+					elif [[ (-f "${key_file}.bk" ) || (-s "${key_file}.bk" ) ]]; then
+						local __counter=0
+
+						# FACA ATEH QUE A CHAVE ORIGINAL DEIXE DE VAZIO
+						while [[ ( "$__counter" -le "20" ) && ( (! -f $original_key_file ) || (! -s $original_key_file ) ) ]]; do
+							__counter=$((__counter+1))
+							W "Arquivo key permanece vazio, recopiando do build.BK..."
+
+							yes |  /bin/cp -f "${key_file}.bk" $original_key_file
+						done
+					fi
+
+					# SE A CHAVE ORIGINAL NAO EXISTIR OU FOR VAZIA
+					if [[ (! -f $original_key_file ) || (! -s $original_key_file ) ]]; then
+						ERR "FALHA ao criar/assinar '$_CERT_TIPO', chave privada vazia ou inexistente."
+						self_run &
+					else
+						OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
+						systemctl restart nginx
+					fi
+				else
+					OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
+					systemctl restart nginx
+				fi
+			else
+				ERR "FALHA ao criar/assinar '$_CERT_TIPO', renovação não foi efetivada."
+				self_run &
+			fi
+
+		# NAO FOI INFORMADO O TIPO	
+		else
+			ERR "Tipo de certificado inválido, deve ser ECDSA ou RSA."
+		fi
+	else
+		ERR "Quantidade de parametros incompativel ou parâmetros invalidos."
+	fi
+
+	printf "\n"
+
+	while [[ -d "$_CERT_BUILDPATH" ]]; do
+		yes | rm -rf "$_CERT_BUILDPATH"
+	done
+
+	printf "\n"
+}
+
+self_run

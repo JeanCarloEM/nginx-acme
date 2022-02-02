@@ -7,7 +7,7 @@ LABEL maintainer="JeanCarloEM.com"
 LABEL version="1.0.0"
 
 ENV ISDOCKERIMAGE=1
-ENV TLSFOLDER="/etc/nginx/ssl"
+ENV DOMFOLDER="/var/www"
 
 # COPIAR OS ARQUIVOS DE CONFIGURAÇÃO
 COPY ./src/* /etc/nginx/

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [[ "$TLSFOLDER" = "" ]]; then
+TLSFOLDER="/etc/nginx/ssl"
+
+if [[ ! -d "$TLSFOLDER" ]]; then
+    mkdir -p "$TLSFOLDER"
+fi
+
+while [[ 1 ]]; do
+    sleep 30
+
+    for d in $TLSFOLDER ; do
+        [ -L "${d%/}" ] && continue
+
+        if [[ ( -d "$d" ) && ( ! -d "$d/build" ) ]];
+            local dom="$(basename -- $d)"
+            chmod +x ./acme.renew
+            chmod +x ./.acme.renew
+            ./acme.renew    -dom "$dom" -path "$d" -tipo "ECDSA" \
+                            -cfkey "$CLOUDFLARE_KEY" -cfmail "$CLOUDFLARE_MAIL" &
+        fi
+    done
+
+    sleep 30
+done

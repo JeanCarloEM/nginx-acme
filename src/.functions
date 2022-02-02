@@ -1,0 +1,202 @@
+#!/bin/bash
+
+# https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+_Black="\033[0;30m"
+_DarkGray="\033[1;30m"
+_Red="\033[0;31m"
+_LightRed="\033[1;31m"
+_Green="\033[0;32m"
+_LightGreen="\033[1;32m"
+_BrownOrange="\033[0;33m"
+_Yellow="\033[1;33m"
+_Blue="\033[0;34m"
+_LightBlue="\033[1;34m"
+_Purple="\033[0;35m"
+_LightPurple="\033[1;35m"
+_Cyan="\033[0;36m"
+_LightCyan="\033[1;36m"
+_LightGray="\033[0;37m"
+_White="\033[1;37m"
+_NC="\033[0m"
+
+#
+#
+#
+function title(){
+	if [[ "$2" -eq "2" ]]; then
+		__COLORTITLE=$_Cyan
+	else
+		if [[ "$2" -eq "3" ]]; then
+			__COLORTITLE=$_Red
+		else
+			if [[ "$2" -eq "4" ]]; then
+				__COLORTITLE=$_LightGreen
+			else
+				if [[ "$2" -eq "5" ]]; then
+					__COLORTITLE=$_Cyan
+				else
+					__COLORTITLE=$_Yellow
+				fi
+			fi
+		fi
+	fi
+
+	printf "\n${__COLORTITLE}"
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	echo "$1"
+	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
+	printf "${_NC}\n"
+	sleep 3
+}
+
+#
+#
+#
+function exibir(){	
+	local __dom=""
+	
+	if [[ -z $_DOMINIO ]]; then
+		__dom=$(getParam $* "-dom")
+	else
+		__dom=${_DOMINIO}
+	fi
+
+	local TMm=`date +%d/%m\ %H:%M:%S`
+	printf "$1[$TMm][$__dom] $2${_NC}\n"
+}
+
+#
+#
+#
+function OK(){
+	exibir "${_LightGreen}" "$1"
+}
+
+#
+#
+#
+function ST(){
+	exibir "${_LightPurple}" "$1"
+}
+
+#
+#
+#
+function LOG(){
+	exibir "${_Cyan}" "$1"
+}
+
+#
+#
+#
+function ERR(){
+	exibir "${_LightRed}" "$1"
+}
+
+#
+#
+#
+function WARN(){
+	exibir "${_Yellow}" "$1"
+}
+
+
+#
+# RETORNA VIA ECHO O PARAMETRO SEGUIDO DO PARAMETRO FORNECIDO
+# NO ARGUMENTO $1 DESTA VARIAVEL, EXEMPLO:
+# 	bash ./myscrip.bash -path /etc/algo
+# ao executar getParam $* "-path", o retonro sera "/etc/algo"
+# DEVE FORNECER OS PARAMETROS DO SCRIPT PRIMEIRO
+#
+function getParam() {
+	for __i in `seq 1 $#`; do
+		if [[ "$__i" -lt `expr $# - 1` ]]; then
+	    	if [[ "${!__i}" = "${!#}" ]]; then
+				__r=`expr $__i + 1`
+	      		echo "${!__r}"
+	      		break
+			fi
+	  	fi
+	done
+}
+
+# DEFINE O ACL PARA O ARQUIVO E TODO O CONTEUDO
+# SUBDIRETORIOS E ARQUIVOS
+function __setACLDirFilesDirFiles(){
+  # $1 path
+  # $2 tipo, u, g, o
+  # $3 o acesso , rwx
+  # $4 nome usuario ou grupo
+   setfacl -m $2:$4:$3 $1
+
+  # SE FOR DIRETORIO
+  if [[ -d $1 ]]; then
+     setfacl -R -m $2:$4:$3 $1
+     setfacl -R -m d:$2:$4:$3 $1
+  fi;
+}
+
+# DEFINE O ACL APENAS PARA ARQUIVO, RECURSIVAMENTE
+# NAO INCLUI O PROPRIO DIRETORIO
+function __setACLDirFilesOnlyFiles(){
+  # $1 path
+  # $2 tipo, u, g, o
+  # $3 o acesso , rwx
+  # $4 nome usuario ou grupo
+  # SE FOR DIRETORIO
+  if [[ -d $1 ]]; then
+    # PROCURA TODOS OS DIRETORIOS E DEFINE
+     find $1 -type f -exec setfacl -m $2:$4:$3 {} +
+  fi;
+}
+
+# DEFINE O ACL APENAS PARA DIRETORIOS, RECURSIVAMENTE
+function __setACLDirFilesOnlyFolders(){
+  # $1 path
+  # $2 tipo, u, g, o
+  # $3 o acesso , rwx
+  # $4 nome usuario ou grupo
+  # SE FOR DIRETORIO
+  if [[ -d $1 ]]; then
+     setfacl -m $2:$4:$3 $1
+
+    # PROCURA TODOS OS DIRETORIOS E DEFINE
+     find $1 -type d -exec setfacl -m $2:$4:$3 {} +
+  fi;
+}
+
+# PERMITE AO USUARIO LER E GRAVAR OU EXECUTAR
+function __RWXAcess (){
+	local USUARIO=$3
+	
+	# O $USUARIO $1 ACESSO
+	if [[ "$#" -lt "3" ]]; then
+		setfacl -R -m u:$USUARIO:$2 $1
+	fi
+
+	setfacl -R -m d:u:$USUARIO:$2 $1
+	find $1 -type d -exec setfacl -m default:u:$USUARIO:$2 {} +
+
+	# USUARIO CRIADOR
+	if [[ "$#" -lt 3 ]]; then
+		setfacl -R -m u::$2 $1
+	fi
+
+	setfacl -R -m d:u::$2 $1
+	find $1 -type d -exec setfacl -m default:u::$2 {} +
+
+	# O GRUPO NAO TEM ACESSO
+	setfacl -R -m g::- $1
+	setfacl -R -m d:g::- $1
+	find $1 -type d -exec setfacl -m default:g::- {} +
+
+	# NGINX PODE LER E GRAVAR
+	setfacl -R -m u:nginx:rwx $1
+	setfacl -R -m d:u:nginx:rwx $1
+	find $1 -type d -exec setfacl -m default:u:nginx:rwx {} +
+
+	# TODOS OS OUTROS NAO PODEM
+	setfacl -R -m o::- $1
+	setfacl -R -m d:o::- $1
+	find $1 -type d -exec setfacl -m default:o::- {} +
+}

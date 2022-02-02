@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Erro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            height: 100vh;
+            background-image: radial-gradient(closest-side, #fff, #eee);
+            text-align: center;
+            color: #aaa;
+            font-family: "Helvetica Neue";
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .logo {
+            margin: 4rem auto;
+            display: block;
+        }
+        h1 {    
+            font-size: 10rem;
+            line-height: 4rem;
+            margin: 5rem auto;
+            margin-top: 24rem;
+            padding: 0 2rem;
+            text-shadow: 0 .2rem .4rem rgba(0, 0, 0, 0.2);
+            color: rgba(255, 70, 70, 0.7);
+            letter-spacing: 0.05rem;
+            font-weight: 600;
+            max-width: 60rem;
+        }
+        p {
+            color: #ababab;
+            font-size: 1.5rem;
+            font-weight: 300;
+            line-height: 1.7rem;
+            max-width: 60rem;
+            margin: 2vh 10vw;
+            text-shadow: 0 .2rem .3rem rgba(0, 0, 0, 0.1);
+            letter-spacing: .05rem;
+            padding: 0 2rem;
+            text-align: justify;
+        }
+        p a {
+            color: inherit;
+        }
+        p a:hover {
+            color: #fff;
+        }
+        .button {
+            color: #2ea3f2;
+            background: #fff;
+            border-radius: .3rm;
+            display: inline-block;
+            padding: 1.2rem 4.8rem;
+            text-decoration: none;
+            box-shadow: 0 .1rem .2rem rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-out;
+        }
+        .button:hover {
+            margin-top: -.2rm;
+            box-shadow: 0 .6rem 2.4rem rgba(0, 0, 0, 0.4);
+        }
+        .browser {            
+            text-align: center;
+            width: 20rem;
+            min-width: 20rem;
+            min-height: 17.5rem;
+            background: #ffffff;
+            box-shadow: 0 4rem 8rem 0 rgba(0, 0, 0, 0.25);
+            border-radius: .3rm;
+            animation: bobble 1.8s ease-in-out infinite;
+            position: absolute;
+            left: 50%;
+            margin-left: -10rem;
+        }
+        .browser .controls {
+            width: 100%;
+            height: 3.2rem;
+            background: #e8ecef;
+            border-radius: .3rem .3rem 0 0;
+            box-sizing: border-box;
+            padding: 1.0rem 1.2rem;
+        }
+        .browser .controls i {
+            height: 1.2rem;
+            width: 1.2rem;
+            border-radius: 100%;
+            display: block;
+            float: left;
+            background: #d6dce0;
+            margin-right: .8rem;
+        }
+        .eye {
+            position: absolute;
+            left: calc(100% - 8rem);
+            top: 5.5rem;
+            width: 3.2rem;
+            height: 3.2rem;
+            opacity: 1;
+        }
+        .eye + .eye {
+            right: calc(100% - 8rem);
+            left: auto;
+        }
+        .eye:before,
+        .eye:after {
+            position: absolute;
+            left: 1.5rem;
+            content: " ";
+            height: 4.0rem;
+            width: 0.3rem;
+            border-radius: .2rem;
+            background-color: #ff5e5b;
+        }
+        .eye:before {
+            transform: rotate(45deg);
+        }
+        .eye:after {
+            transform: rotate(-45deg);
+        }
+        .mouth {
+            position: absolute;
+            width: 20rem;
+            top: 12rem;
+            left: 50%;
+            margin-left: -10rem;
+            height: 4rem;
+        }
+        .mouth .lips {
+            position: absolute;
+            left: 3rem;
+            content: " ";
+            height: 2.5rem;
+            width: .3rem;
+            border-radius: .2rem;
+            background-color: #ff5e5b;
+            transform: rotate(-54deg);
+        }
+        .mouth .lips:nth-child(odd) {
+            transform: rotate(54deg);
+        }
+        .mouth .lips:nth-child(n + 2) {
+            margin-left: 1.8rem;
+        }
+        .mouth .lips:nth-child(n + 3) {
+            margin-left: 3.8rem;
+        }
+        .mouth .lips:nth-child(n + 4) {
+            margin-left: 5.8rem;
+        }
+        .mouth .lips:nth-child(n + 5) {
+            margin-left: 7.8rem;
+        }
+        .mouth .lips:nth-child(n + 6) {
+            margin-left: 9.8rem;
+        }
+        .mouth .lips:nth-child(n + 7) {
+            margin-left: 11.8rem;
+        }
+        .mouth .lips:nth-child(n + 8) {
+            margin-left: 13.8rem;
+        }
+        .mouth .lips:nth-child(n + 9) {
+            margin-left: 15.8rem;
+        }
+        @keyframes bobble {
+            0%,
+            100% {
+                margin-top: .5rem;
+                margin-bottom: 2rem;
+                box-shadow: 0 4rem 8rem rgba(0, 0, 0, 0.24);
+            }
+            50% {
+                margin-top: 2.5rem;
+                margin-bottom: 0rem;
+                box-shadow: 0 2.4rem 6.4rem rgba(0, 0, 0, 0.4);
+            }
+        }
+        @media only screen and (min-device-width: 32rem) and (max-device-width: 48rem) {
+            .browser {
+                width: 28rem;
+                margin-left: -14rem;
+            }
+            .browser .eye {
+                left: 30%;
+            }
+            .browser .eye + .eye {
+                left: auto;
+                right: 30%;
+            }
+        }
+    </style>
+
+    <script>
+        (function(){
+            var errs={
+                500:["Internal Server Error","Erro interno de servidor"],
+                501:["Not Implemented","Não implementado"],
+                502:["Bad Gateway","Gateway Inválido"],
+                503:["Service Unavailable","Serviço indisponível"],
+                504:["Gateway Timeout", "Tempo de gateway expirado"],
+                505:["HTTP Version Not Supported","Versão HTTP não suportada"],
+                506:["Variant Also Negotiates","Referência circular"],
+                507:["Insufficient Storage","Espaço em serviços insuficiente"],
+                508:["Loop Detected","Loop infinito"],
+                510:["Not Extended","Sem, extenção"],
+                511:["Network Authentication Required","Autenticação de rede necessária"]
+            };
+
+            GET = (p) => {
+                var result = null,
+                    tmp = [];
+                location.search
+                    .substr(1)
+                    .split("&")
+                    .forEach(function (item) {
+                    tmp = item.split("=");
+                    if (tmp[0] === p) result = decodeURIComponent(tmp[1]);
+                    });
+                return result;
+            }
+
+            document.addEventListener("DOMContentLoaded", ()=>{
+                if (GET('e')){
+                    document.getElementsByTagName('h1')[0].innerHTML = GET('e');
+                    var link = document.getElementById('code');
+                    link.setAttribute('href', "https://developer.mozilla.org/docs/Web/HTTP/Status/"+GET('e'));
+                    link.innerHTML=GET('e')+" "+errs[parseInt(GET('e'))][0]+" ("+errs[parseInt(GET('e'))][1]+")";
+                    document.title="Erro "+GET('e')+" "+errs[parseInt(GET('e'))][0];
+                }
+            });
+        })();
+    </script>
+</head>
+
+<body>
+    <div><br /></div>
+
+    <div class="browser">        
+        <div class="controls">
+            <i></i>
+            <i></i>
+            <i></i>
+        </div>
+        
+        <div class="eye"></div>
+        <div class="eye"></div>
+        <div class="mouth">
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+            <div class="lips"></div>
+        </div>
+    </div>
+
+    <h1>50X</h1>
+
+    <p>Não foi possível atender sua solicitação.
+        Erros do tipo 50X são erros que ocorreram no servidor;
+        clique para saber mais sobre o erro <a id="code" target="_blank"></a>.
+        A ocorrência do erro já foi salva e está em tratamento. 
+        Por favor, tente novamente em instantes.
+    </p><br />
+
+</body>
+</html>

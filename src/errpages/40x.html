@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lan="pt-BR">
+<head>
+    <title>Erro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chango&family=Montserrat:wght@100;200;300;400;500&display=swap" rel="stylesheet">
+
+    <style>     
+        * {
+        -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+        }
+
+        body {
+        padding: 0;
+        margin: 0;
+        }
+
+        #notfound {
+        position: relative;
+        height: 100vh;
+        }
+
+        #notfound .notfound {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        }
+
+        .notfound {
+        max-width: 520px;
+        width: 100%;
+        line-height: 1.4;
+        }
+
+        .notfound>div:first-child {
+        padding-left: 200px;
+        padding-top: 12px;
+        height: 170px;
+        margin-bottom: 20px;
+        }
+
+        .notfound .notfound-404 {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 170px;
+        height: 170px;
+        background: #e01818;
+        border-radius: 7px;
+        -webkit-box-shadow: 0px 0px 0px 10px #e01818 inset, 0px 0px 0px 20px #fff inset;
+                box-shadow: 0px 0px 0px 10px #e01818 inset, 0px 0px 0px 20px #fff inset;
+        }
+
+        .notfound .notfound-404 h1 {
+        font-family: 'Chango', cursive;
+        color: #fff;
+        font-size: 118px;
+        margin: 0px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+        display: inline-block;
+        height: 60px;
+        line-height: 60px;
+        }
+
+        .notfound h2 {
+        font-family: 'Chango', cursive;
+        font-size: 68px;
+        color: #222;
+        font-weight: 400;
+        text-transform: uppercase;
+        margin: 0px;
+        line-height: 1.1;
+        }
+
+        .notfound p {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        color: #222;
+        margin-top: 5px;
+        }
+
+        .notfound a {
+        font-family: 'Montserrat', sans-serif;
+        color: #e01818;
+        font-weight: 400;
+        text-decoration: none;
+        }
+
+        @media only screen and (max-width: 480px) {
+        .notfound {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        .notfound>div:first-child {
+            padding: 0px;
+            height: auto;
+        }
+        .notfound .notfound-404 {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .notfound h2 {
+            font-size: 42px;
+        }
+        }        
+    </style>
+
+    <script>
+        (function(){
+            var errs={
+                400:["Bad Request","Requisição inválida"],
+                401:["Unauthorized","Não autorizado"],
+                402:["Payment Required","Pagamento Necessário"],
+                403:["Forbidden","Acesso proibido"],
+                404:["Not Found","Não encontrato"],
+                405:["Method Not Allowed","Método não habilitado"],
+                406:["Not Acceptable","Requisição não aceitável"],
+                407:["Proxy Authentication Required","Autenticação de proxy necessária"],
+                408:["Request Timeout","Conexão inativa"],
+                409:["Conflict","Conflito"],
+                410:["Gone","Inexistente"],
+                411:["Length Required","Tamanho da Requisição não especificado"],
+                412:["Precondition Failed","Condições não atendidas"],
+                413:["Payload Too Large","Requisição muito grande"],
+                414:["URI Too Long","URL muito longa"],
+                415:["Unsupported Media Type","Tipo não suportado"],
+                416:["Requested Range Not Satisfiable","Atributo range da requisição insatisfeito"],
+                417:["Expectation Failed","Expecativa não atendida"],
+                418:["I'm a teapot","Eu sou o bule"],
+                421:["Misdirected Request","Requisição mal direcionada"],
+                422:["Unprocessable Entity","Entidade não processada"],
+                423:["Locked","Trancado"],
+                424:["Failed Dependency","Falha na dependência"],
+                425:["Too Early","Muito cedo"],
+                426:["Upgrade Required","Upgrade Necessário"],
+                428:["Precondition Required","Pré Requisitos não atendidos"],
+                429:["Too Many Requests","Muitas requisições"],
+                431:["Request Header Fields Too Large","Cabeçalho da requisição muito grande"],
+                451:["Unavailable For Legal Reasons","Indisponível por razões legais"],
+            };
+
+            GET = (p) => {
+                var result = null,
+                    tmp = [];
+                location.search
+                    .substr(1)
+                    .split("&")
+                    .forEach(function (item) {
+                    tmp = item.split("=");
+                    if (tmp[0] === p) result = decodeURIComponent(tmp[1]);
+                    });
+                return result;
+            }
+
+            document.addEventListener("DOMContentLoaded", ()=>{
+                if (GET('e')){
+                    document.getElementsByTagName('h2')[0].innerHTML = "Error "+GET('e');
+                    var link = document.getElementById('code');
+                    link.setAttribute('href', "https://developer.mozilla.org/docs/Web/HTTP/Status/"+GET('e'));
+                    link.innerHTML=GET('e')+" "+errs[parseInt(GET('e'))][0]+" ("+errs[parseInt(GET('e'))][1]+")";
+                    document.title="Erro "+GET('e')+" "+errs[parseInt(GET('e'))][0];
+                }
+            });
+        })();
+    </script>
+</head>
+
+<body>
+    <div id="notfound">
+    <div class="notfound">
+    <div>
+    <div class="notfound-404">
+    <h1>!</h1>
+    </div>
+    <h2>Error<br>404</h2>
+    </div>
+    <p>Sua solicitação não pode ser atendida com motivo: <a id="code" target="_blank">Back to homepage</a>.</p>
+    </div>
+    </div>        
+</body>
+</html>

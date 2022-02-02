@@ -1,0 +1,224 @@
+#!/bin/bash
+
+include ./functions
+
+# RETORNA A QUANTIDADE DE DIAS QUE FALTAM PARA O CERTIFICADO EXPIRAR
+# SE A QUANTIDADE DE DIAS FOR >= 255, RETORNA 255, NAO RETORNA MAIS QUE ISSO
+# $1 = fullpath filename
+# https://d-herrmann.de/2016/01/bash-one-liner-to-calculate-remaining-days-of-ssl-certificates/
+function getTLSRemaningDays() {
+	# DESMEMBRADOS
+	#local pre1=$(date -d "`openssl x509 -in $1 -text -noout | grep "Not After" | cut -c 25-`" +%s)
+	#local pre2=$(date -d "now" +%s)
+	#local pre3=`expr $pre1 - $pre2`
+	#echo $( echo "(" `expr $pre3 / 86400` ")" | bc )
+
+	#
+	# O ECHO EH CAPITURADO POR UMA VARIA AO SETA-LA COM IGUAL
+	# TIPO: myvar=$(getTLSRemaningDays "/path/to/cert.pem")
+	# 'return' DEVE SER USADO DE FORMA DIFERENTE, POREM O VALOR MAXIMO DE RETURN
+	# EH DE 256, 0-255, ENTAO NAO COMPENSA USAR RETURN AQUI
+	#
+
+	# UNIFICADO
+	echo "(" $(date -d "`openssl x509 -in $1 -text -noout | grep "Not After" | cut -c 25-`" +%s) - $(date -d "now" +%s) ")" / 86400 | bc	
+}
+
+#
+# RETORNA 0 SE NAO HOUVER NECESSIDADE DE RENOVAR, E UM SE HOUVER
+# VERIFICA SE O CERTIFICADO EXSISTE E SE AINDA EH VALIDO
+#
+# A CAPITURA DO RETORNO NAO PODE USAR O IGUALDADE
+# EXEMPLO: mysqvar=$(check_cert_still_valid "dominio.com"  )
+# USE $?
+#
+# $1 o filepath
+# $2 nao emitir print/echo
+function check_cert_still_valid () {
+	[[ "$2" = "" ]] && ST "CHECK SSL '$1'" 3
+
+	# CASO SEJA FORNECIDO PARAMETRO, USAMOS ELE AO INVEZ DE VARIAVEL GLOBAL
+	if [[ $# -ge "1" ]]; then
+		local certFilePath=$1
+	else
+		[[ "$2" = "" ]] && L "Nenhum Certificado fornecido para verificar!"
+		return 0
+	fi
+
+	# SE NAO EXISTE OU SE EXISTE MAS ESTA VAZIO
+	if [[ ( ! -f $certFilePath ) || ( ! -s $certFilePath ) ]] ; then
+		[[ "$2" = "" ]] && LOG "Certificado nao existe!"
+		return 1
+	fi
+
+	# VERIFICA SE VAI EXPIRAR
+	# https://stackoverflow.com/questions/21297853/how-to-determine-ssl-cert-expiration-date-from-a-pem-encoded-certificate
+	# RETORNA 1 SE EXPIROU OU FOR EXPIRAR E 0 EM CASO DE NAO HAVER EXPIRADO
+	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS (30*24*60*60=2592000)
+	local exp=$(openssl x509 -checkend 2592000 -in $certFilePath)
+
+	# VERIFICA A DATA EM QUE VAI EXPERIR
+	local dia=$(openssl x509 -enddate -noout -in $certFilePath)
+
+	# OBTEM A QUANTIDADE DE DIAS QUE FALTAM
+	# CAPITURO O ECHO '=' E NÃO O 'return' COM '=$?'
+	local restam=$(getTLSRemaningDays "$certFilePath")
+
+	[[ "$2" = "" ]] && Log "Expiracao do dominio '$domain'..."
+	[[ "$2" = "" ]] && Log "* $certFilePath "
+	[[ "$2" = "" ]] && Log "  > Expirado? $exp. "
+	[[ "$2" = "" ]] && Log "  > Expira em $dia. "
+	[[ "$2" = "" ]] && Log "  > Falta(m) $restam(s). "	
+
+	#
+	# https://letsencrypt.org/docs/faq/
+	# EH REODMENDADO RENOVAR A CADA 60 DIAS, MESMO QUE EXPIRE APENAS EM 90 DIAS
+	# POR ISSO, SE ESTIVER FALTANDO 30 DIAS (90-30=60) NOS RENOVAMOS
+	#
+	if [[ ( ( "$exp" != "Certificate will not expire" ) && ( "$exp" != "0" ) ) || ( "$restam" -le "30" ) ]] ; then
+		[[ "$2" = "" ]] && Log "Certificado expirado ou a experirar. Renovacao recomendada."
+		sleep 10
+		return 1
+	else
+		[[ "$2" = "" ]] && Log "O certificado esta atualizado. Se necessidade de renovacao ( > 30 dias )."
+		sleep 3
+		return 0
+	fi
+
+	# POR PADRAO
+	return 1
+}
+
+
+#
+#
+# GERA CHAVE E REQUISICAO DE RSA
+function gen_rsa(){
+	LOG "Gerando comando..."
+
+	CMDCert="openssl req -newkey rsa:4096 -keyout ${key_file} -out ${csr_file} -sha512 -nodes $CMD_data"
+
+	LOG "$CMDCert"
+	LOG "Executando..."
+	eval "${CMDCert}"
+}
+
+#
+#
+# GERA A CHAVE E REQUISICAO ECDSA
+function gen_ecdsa(){
+	LOG "Gerando comando..."
+
+	# https://devcentral.f5.com/articles/building-an-openssl-certificate-authority-creating-ecc-certificates-27912
+	CMDCert="openssl req -newkey ec:<(openssl ecparam -name secp384r1) -keyout ${key_file} -out ${csr_file} -sha512 -nodes $CMD_data"
+
+	LOG "$CMDCert"
+	LOG "Executando..."
+	eval "${CMDCert}"
+}
+
+#
+#
+# GERA O COMANDO PARA CRIAR/_RENOVAR O CERTIFICADO
+function ACME_RUN(){
+	ACME_RUN_CMD=". ${_ACME_PATH}/acme.sh --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
+}
+
+#
+# GERA O COMANDO PARA INSTALAR O CERTIFICADO
+# https://kb.virtubox.net/knowledgebase/how-to-issue-wildcard-ssl-certificate-with-acme-sh-nginx/
+function ACME_INSTALL(){
+	# https://github.com/Neilpang/acme.sh
+	ACME_RUN_CMD=". ${_ACME_PATH}/acme.sh --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
+}
+
+#
+#
+#
+function WRITE_CMD(){
+	yes |  rm -f ${_ACME_PATH}/eval_cmd.sh
+
+	echo "export CF_Key=\"$CF_Key\"" >> ${_ACME_PATH}/eval_cmd.sh
+	echo "export CF_Email=\"$CF_Email\"" >> ${_ACME_PATH}/eval_cmd.sh
+	echo $1 >> ${_ACME_PATH}/eval_cmd.sh
+
+	 chmod +x ${_ACME_PATH}/eval_cmd.sh
+}
+
+#
+#
+# GERA O CERTIFICADO ECDSA
+function acme_sign() {
+	ST "Executando ACME para '$_CERT_TIPO'..."
+	LOG "Gerando acme 'run'"
+
+	# CRIANDO/RENOVANDO
+	ACME_RUN $1
+	RUN="$ACME_RUN_CMD $2"
+
+	WRITE_CMD "$RUN"
+	
+	LOG "   $RUN"
+	LOG ">> Executando acme 'run'..."
+
+	# EXECUTA
+	. ${_ACME_PATH}/eval_cmd.sh	
+
+	# INSTALANDO
+	LOG "Gerando acme 'install'"
+	ACME_INSTALL $1
+	RUN="$ACME_RUN_CMD $3"
+
+	WRITE_CMD "$RUN"
+	
+	LOG "   $RUN"
+	LOG ">> Executando acme 'install'..."
+
+	# EXECUTA
+	. ${_ACME_PATH}/eval_cmd.sh	
+}
+
+#
+# GERA AMBOS OS TIPO DE CERTIFICADO PARA UMA CONFIGURACAO HIBRIDA
+# https://hackernoon.com/rsa-and-ecdsa-hybrid-nginx-setup-with-letsencrypt-certificates-ee422695d7d3
+# https://scotthelme.co.uk/hybrid-rsa-and-ecdsa-certificates-with-nginx/
+#
+# $1 => dominio
+# $2 => _CERT_BUILDPATH
+#
+function gen_cert() {
+	# CRIANDO O AMBIENTE DE LOG	
+	 touch "${_LOG_PATH}/${_DOMINIO}.log"	
+
+	# GERA A CHAVE E A REQUISICAO DE ASSINATURA
+	gencsr
+
+	if [[ $_CERT_TIPO = "ECDSA" ]]; then
+		acme_sign "ECDSA" "--keylength ec-384" "--ecc"
+	elif [[ $_CERT_TIPO = "RSA" ]]; then
+		acme_sign "RSA" "--keylength 4096" " "		
+	fi
+}
+
+#
+#
+#
+function gencsr(){	
+	# SE FOR PAARA FORCAR OU A CHAVE FOR MAIS ANTIGA QUE 5 DIAS
+	if [[ ("$_FORCE" -eq "1") || (! -s $key_file) || ( "$(stat -c %Z "$key_file")" -le "$(echo "(" $(date -d "now" +%s) - 432000 ")" | bc)" ) ]]; then
+		ST "(Re)gerar Key/CSR"
+		
+		if [[ $_CERT_TIPO = "ECDSA" ]]; then
+			LOG "Selecionado ECDSA."
+			gen_ecdsa
+		elif [[ $_CERT_TIPO = "RSA" ]]; then
+			LOG "Selecionado RSA."
+			gen_rsa
+		fi
+
+		# POR ALGUM MOTIVO A KEY TEM FICADO ZERADO, BACKUP KEY
+		if [[ (-f $key_file) && (-s $key_file) ]]; then
+			yes |  cp -f $key_file "${key_file}.bk"
+		fi
+	fi	
+}
