@@ -1,19 +1,28 @@
 # Nginx-Acme
 
-![Build Status](https://badgen.net/badge/build/testing/red?icon=github)
+![License](https://badgen.net/github/license/jeancarloem/nginx-acme) ![Build Status](https://badgen.net/github/status/jeancarloem/nginx-acme) ![releases](https://badgen.net/github/releases/jeancarloem/nginx-acme)  ![latest](https://badgen.net/github/release/jeancarloem/nginx-acme/stable?label=stable) ![latest](https://badgen.net/github/release/jeancarloem/nginx-acme?label=latest)
+![](https://badgen.net/docker/pulls/jeancarloem/nginx-acme?icon=docker) ![](https://badgen.net/docker/size/jeancarloem/nginx-acme/latest?icon=docker&label=size) ![](https://badgen.net/docker/layers/jeancarloem/nginx-acme/latest?icon=docker&label=layers)
 
-Nginx Acme é um projeto de imagem docker que integra nginx, [Acme.sh](https://github.com/acmesh-official/acme.sh) e openssl, com acréscimo de configuações opicionais.
+Nginx Acme is a docker image of nginx with [Acme.sh](https://github.com/acmesh-official/acme.sh), openssl with optional settings added.
 
-- Original and unaltered applications;
-- [Acme.sh](https://github.com/acmesh-official/acme.sh) is a neat shell for automating TLS certificates with [Let's Encript](https://letsencrypt.org/)..
+* [Features](#features)
+* [Volume Recommendation:](#volume-recommendation-)
+  * [Directory Structure](#directory-structure)
+* [Build](#build)
+* [Usage](#usage)
 
 ## Features
 
+- Original, unaltered and stable applications;
+- [Acme.sh](https://github.com/acmesh-official/acme.sh) is a neat shell for automating TLS certificates with [Let's Encript](https://letsencrypt.org/)..
 - Acme for cloudflare;
 - Openssl included;
 - Optional configuration files, in the ``/etc/nginx/general`` folder.
 
-## Directories to mount as volume:
+## Volume Recommendation
+
+These are the folders that must be mounted on volumes for adding configuration.
+
 - ``/etc/nginx/conf.d``
 - ``/var/www``
 
@@ -26,6 +35,7 @@ There are two masses included in ``/etc/nginx`` that have templates and scripts 
 - ``/etc/nginx/createdomain.sh``
 - ``/etc/nginx/acme.service``
 - ``/etc/nginx/acme.renew``
+- ``/etc/nginx/conf.d/<USERNAME>/<DOMAIN>.conf``
 
 The ``createdomain.sh`` needs 4 parameters, as follows:
 > ``./createdomain.sh -dom <example.com> -user <linuxuser>``
@@ -51,6 +61,16 @@ The ``.nginx.conf`` file is where you can add additional settings.
 
 The ``.alternativenames`` is a text file where each subdomain to be included in the certificate must be added separated by lines. Note, however, that the certificate is already requested with a wildcard *.example.com, that is, it is only necessary to add the second level subdomains such as ``idp.account`` or ``galery.profile``.
 
-## License
+## Build
 
-MIT
+``docker build -t jeancarloem/nginx-acme:latest .``
+
+# Usage
+
+````
+docker run  --name nginx-main \
+            -v /etc/nginx/conf.d/:/etc/nginx/conf.d/ \
+            -v /var/www:/var/www \
+            -d -p 80:80 -p 443:443 \
+            jeancarloem/nginx-acme:latest
+````

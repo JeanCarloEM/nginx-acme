@@ -1,1 +1,0 @@
-docker build -f ./.dockerfile -t jeancarloem/nginx-acme .
