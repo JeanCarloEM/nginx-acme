@@ -1,13 +1,16 @@
 #FROM bash:latest
-FROM neilpang/acme.sh:latest
-FROM securefab/openssl:latest
-FROM nginx:stable
+FROM nginx:stable AS NGINX
+FROM securefab/openssl:latest AS OPENSSL
+FROM neilpang/acme.sh:latest as ACME
 
 LABEL maintainer="JeanCarloEM.com"
 LABEL version="1.0.0"
 
 ENV ISDOCKERIMAGE=1
 ENV DOMFOLDER="/var/www"
+
+COPY --from=OPENSSL / /
+COPY --from=NGINX / /
 
 # COPIAR OS ARQUIVOS DE CONFIGURAÇÃO
 COPY ./src/.acme.renew /etc/nginx/
