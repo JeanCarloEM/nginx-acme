@@ -1,12 +1,14 @@
 # Nginx-Acme
 
-![License](https://badgen.net/github/license/jeancarloem/nginx-acme) ![Build Status](https://badgen.net/github/status/jeancarloem/nginx-acme) ![releases](https://badgen.net/github/releases/jeancarloem/nginx-acme)  ![latest](https://badgen.net/github/release/jeancarloem/nginx-acme/stable?label=stable) ![latest](https://badgen.net/github/release/jeancarloem/nginx-acme?label=latest)
+![License](https://badgen.net/github/license/jeancarloem/nginx-acme)  ![latest](https://badgen.net/github/release/jeancarloem/nginx-acme) ![releases](https://badgen.net/github/releases/jeancarloem/nginx-acme) 
+
 ![](https://badgen.net/docker/pulls/jeancarloem/nginx-acme?icon=docker) ![](https://badgen.net/docker/size/jeancarloem/nginx-acme/latest?icon=docker&label=size) ![](https://badgen.net/docker/layers/jeancarloem/nginx-acme/latest?icon=docker&label=layers)
 
 Nginx Acme is a docker image of nginx with [Acme.sh](https://github.com/acmesh-official/acme.sh), openssl with optional settings added.
+You can access it on [![](https://badgen.net/badge/icon/github?icon=github&label)](https://github.com/JeanCarloEM/nginx-acme) and also on [![](https://badgen.net/badge/icon/docker?icon=docker&label)](https://hub.docker.com/repository/docker/jeancarloem/nginx-acme).
 
 * [Features](#features)
-* [Volume Recommendation:](#volume-recommendation-)
+* [Volume Recommendation:](#volume-recommendation)
   * [Directory Structure](#directory-structure)
 * [Build](#build)
 * [Usage](#usage)
