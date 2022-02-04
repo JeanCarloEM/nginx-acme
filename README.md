@@ -70,10 +70,26 @@ The ``.alternativenames`` is a text file where each subdomain to be included in 
 
 # Usage
 
+Proxy usage:
+
 ````
+$env:DOCKER_BUILDKIT=0
 docker run  --name nginx-main \
             -v /etc/nginx/conf.d/:/etc/nginx/conf.d/ \
             -v /var/www:/var/www \
             -d -p 80:80 -p 443:443 \
+            -e PROXYPASS=<ip-or-socker>  \            
+            jeancarloem/nginx-acme:latest
+````
+
+PHP socket susage:
+
+````
+$env:DOCKER_BUILDKIT=0
+docker run  --name nginx-main \
+            -v /etc/nginx/conf.d/:/etc/nginx/conf.d/ \
+            -v /var/www:/var/www \
+            -d -p 80:80 -p 443:443 \
+            -e PHPASS=<ip-or-socker> \            
             jeancarloem/nginx-acme:latest
 ````

@@ -183,11 +183,11 @@ function self_run(){
 						self_run &
 					else
 						OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-						systemctl restart nginx
+						. /etc/init.d/nginx restart
 					fi
 				else
 					OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-					systemctl restart nginx
+					. /etc/init.d/nginx restart
 				fi
 			else
 				ERR "FALHA ao criar/assinar '$_CERT_TIPO', renovação não foi efetivada."

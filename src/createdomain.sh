@@ -66,11 +66,13 @@ if [[ ! -f /etc/nginx/conf.d/$_USER/$_DOMINIO.conf ]]; then
 	local dpath="$_dom_path_/$_DOMINIO"
 	local tlspath="$_dom_path_/$_DOMINIO/.tls"
 	local dominio_excap=$(echo "jeancarloem.com" | sed "s/\\./\\\./g")
-	
-	cat /etc/nginx/template/MODELO.conf | sed "s/##{DOMINIO}/$_DOMINIO_excap/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf	
-	cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{DOMINIO_PATH}/$dpath/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf	
-	cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{DOMINIO_TLS}/$tlspath/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf
 fi
+
+cat /etc/nginx/template/MODELO.conf | sed "s/##{DOMINIO}/$_DOMINIO_excap/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf	
+cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{DOMINIO_PATH}/$dpath/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf	
+cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{DOMINIO_TLS}/$tlspath/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf
+cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{PROXY}/$PROXYPASS/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf
+cat /etc/nginx/conf.d/$_USER/$_DOMINIO.conf | sed "s/##{PHP}/$PHPASS/g" >> /etc/nginx/conf.d/$_USER/$_DOMINIO.conf
 
 # CRIA A CONFIGURACAO DO USUÁRIO COM INCLUSÃO TOTAL DO SUB FOLDER
 if [[ ! -f "/etc/nginx/conf.d/$_USER.conf" ]]; then
