@@ -66,7 +66,10 @@ The ``.alternativenames`` is a text file where each subdomain to be included in 
 
 ## Build
 
-``docker build -t jeancarloem/nginx-acme:latest .``
+````
+$env:DOCKER_BUILDKIT=0
+docker build -t jeancarloem/nginx-acme:latest .
+````
 
 # Usage
 
@@ -90,6 +93,6 @@ docker run  --name nginx-main \
             -v /etc/nginx/conf.d/:/etc/nginx/conf.d/ \
             -v /var/www:/var/www \
             -d -p 80:80 -p 443:443 \
-            -e PHPASS=<ip-or-socker> \            
+            -e PHPASS=<ip-or-socker> \
             jeancarloem/nginx-acme:latest
 ````

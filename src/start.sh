@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "#######################- Rosando no start" 
+echo "#######################- Rosetando no start" 
 
-systemctl restart nginx || service nginx restart
+systemctl start nginx && service nginx start && nginx -g daemon off
 
 echo "#######################- Rodando acme" 
-. /etc/nginx/acme.service
+/etc/nginx/acme.service

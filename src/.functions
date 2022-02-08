@@ -45,8 +45,7 @@ function title(){
 	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
 	echo "$1"
 	printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
-	printf "${_NC}\n"
-	sleep 3
+	printf "${_NC}\n"	
 }
 
 #

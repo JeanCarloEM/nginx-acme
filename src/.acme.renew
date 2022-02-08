@@ -76,12 +76,10 @@ function check_cert_still_valid () {
 	# POR ISSO, SE ESTIVER FALTANDO 10 DIAS (90-10=80) NOS RENOVAMOS
 	#
 	if [[ ( ( "$exp" != "Certificate will not expire" ) && ( "$exp" != "0" ) ) || ( "$restam" -le "10" ) ]] ; then
-		[[ "$2" = "" ]] && Log "Certificado expirado ou a experirar. Renovacao recomendada."
-		sleep 10
+		[[ "$2" = "" ]] && Log "Certificado expirado ou a experirar. Renovacao recomendada."		
 		return 1
 	else
-		[[ "$2" = "" ]] && Log "O certificado esta atualizado. Se necessidade de renovacao ( > 10 dias )."
-		sleep 3
+		[[ "$2" = "" ]] && Log "O certificado esta atualizado. Se necessidade de renovacao ( > 10 dias )."		
 		return 0
 	fi
 
