@@ -1,26 +1,35 @@
 #!/bin/bash
 
+echo `date +%Y%m%d` >> /etc/nginx/.log
+
 if [[ "$TLSFOLDER" = "" ]]; then
-TLSFOLDER="/etc/nginx/ssl"
+  TLSFOLDER="/etc/nginx/ssl"
+fi
 
 if [[ ! -d "$TLSFOLDER" ]]; then
     mkdir -p "$TLSFOLDER"
 fi
 
-##while [[ 1 ]]; do
-  ##  sleep 30
+function reload(){
+  if [ "$(command -v \"systemctl\")" = "" ]; then 
+      if [ "$(command -v \"service\")" = "" ]; then 
+          nginx -s reload
+      else 
+          service enable restart
+      fi
+  else 
+      systemctl restart nginx
+  fi
+}
 
-    for d in $TLSFOLDER ; do
-        [ -L "${d%/}" ] && continue
+for d in $TLSFOLDER ; do
+    [ -L "${d%/}" ] && continue
 
-        if [[ ( -d "$d" ) && ( ! -d "$d/build" ) ]];
-            local dom="$(basename -- $d)"
-            chmod +x ./acme.renew
-            chmod +x ./.acme.renew
-            ./acme.renew    -dom "$dom" -path "$d" -tipo "ECDSA" \
-                            -cfkey "$CLOUDFLARE_KEY" -cfmail "$CLOUDFLARE_MAIL" &
-        fi
-    done
-
-  ##  sleep 30
-##done
+    if [[ ( -d "$d" ) && ( ! -d "$d/build" ) ]]; then
+        local dom="$(basename -- $d)"
+        chmod +x ./acme.renew
+        chmod +x ./.acme.renew
+        ./acme.renew    -dom "$dom" -path "$d" -tipo "ECDSA" \
+                        -cfkey "$CLOUDFLARE_KEY" -cfmail "$CLOUDFLARE_MAIL"
+    fi
+done

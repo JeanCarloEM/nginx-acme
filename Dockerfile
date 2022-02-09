@@ -26,29 +26,18 @@ ENV ISDOCKERIMAGE=1
 ENV DOMFOLDER="/var/www"
 
 # ON INSTALL
-RUN     yes | rm -rf /etc/nginx/conf.d/* && \
-        chmod +x /etc/nginx/install.sh && \
-        chmod +x /etc/nginx/.acme.renew && \
-        chmod +x /etc/nginx/acme.renew && \
-        chmod +x /etc/nginx/acme.service && \
-        chmod +x /etc/nginx/start.sh && \
-        chmod +x /etc/nginx/.acme.renew && \
-        (crontab -l 2>/dev/null; echo "*/1     *       *       *       *       /etc/nginx/acme.renew") | crontab - &&  \
-        (crontab -l 2>/dev/null; echo "@reboot                                 /etc/nginx/start.sh") | crontab -
-
-run \
-    if [ ! command -v "systemctl" &> /dev/null ]; then \
-        if [ ! command -v "service" &> /dev/null ] ; then \
-            run nginx -g daemon off \
-        else \
-            run service enable start \
-        fi \
-    else \
-        systemctl enabel nginx  \
-    fi
+RUN yes | rm -rf /etc/nginx/conf.d/* && \    
+    chmod +x /etc/nginx/.acme.renew && \
+    chmod +x /etc/nginx/acme.renew && \
+    chmod +x /etc/nginx/acme.service && \
+    chmod +x /etc/nginx/entrypoint.sh && \
+    chmod +x /etc/nginx/.acme.renew && \
+    (crontab -l 2>/dev/null; echo "* * * * * /bin/bash '/etc/nginx/acme.service'") | crontab - &&  \
+    (crontab -l 2>/dev/null; echo "@reboot     /etc/nginx/start.sh") | crontab - && \
+    (crontab -l 2>/dev/null; echo "@reboot     nginx -g 'daemon off;'") | crontab -
 
 # ON START
-ENTRYPOINT /etc/nginx/start.sh
+ENTRYPOINT ["/etc/nginx/entrypoint.sh"]
 
 # EXPOR PORTA
 EXPOSE 80/tcp

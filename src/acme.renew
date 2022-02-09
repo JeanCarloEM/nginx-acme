@@ -4,6 +4,7 @@
 # -path :: pasta onde serah gravado os certificados
 # -tipo :: opcional ECDSA/RSA
 
+source ./.functions
 source ./.acme.renew
 
 # DNS - CONFIGURACOES DO CLOUDFLARE, SUBSTITUA
