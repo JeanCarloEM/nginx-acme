@@ -54,7 +54,7 @@ function check_cert_still_valid () {
 	# VERIFICA SE VAI EXPIRAR
 	# https://stackoverflow.com/questions/21297853/how-to-determine-ssl-cert-expiration-date-from-a-pem-encoded-certificate
 	# RETORNA 1 SE EXPIROU OU FOR EXPIRAR E 0 EM CASO DE NAO HAVER EXPIRADO
-	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS 10 DIAS (15*24*60*60=864000)
+	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS 10 DIAS (10*24*60*60=864000)
 	local exp=$(openssl x509 -checkend 864000 -in $certFilePath)
 
 	# VERIFICA A DATA EM QUE VAI EXPERIR
@@ -219,4 +219,23 @@ function gencsr(){
 			yes |  cp -f $key_file "${key_file}.bk"
 		fi
 	fi	
+}
+
+#
+# FAZ O BACKUP/COMMIT DAS MUDANCAS
+#
+function saveModBK(){
+	if [ ! -d "$_BK_PATH" ]; then	
+		LOG "Commit/backup do novo certificado..."
+
+		if [ ! -d "$DOMFOLDER/.git" ]; then						
+			echo "*\n!*/\n!*/*" > "$DOMFOLDER/.gitignore"
+			git init -q "$DOMFOLDER/"
+		fi
+
+		git add "$_CERT_PATH/."
+		git commit -m "$_DOMINIO $(`date +%d/%m/%Y-%H:%M`)"
+
+		LOG "Commit/backup concluído."		
+	fi
 }

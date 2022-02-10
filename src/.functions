@@ -48,6 +48,18 @@ function title(){
 	printf "${_NC}\n"	
 }
 
+function reload(){
+  if [ "$(command -v \"systemctl\")" = "" ]; then 
+      if [ "$(command -v \"service\")" = "" ]; then 
+          nginx -s reload
+      else 
+          service nginx restart
+      fi
+  else 
+      systemctl restart nginx
+  fi
+}
+
 #
 #
 #

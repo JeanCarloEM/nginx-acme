@@ -13,8 +13,9 @@ CF_Email=$(getParam $* "-cfmail")
 
 # PARAMETROS
 _DOMINIO=$(getParam $* "-dom")
+_DOM_PATH="$DOMFOLDER/$_DOMINIO"
 _CERT_PATH=$(getParam $* "-path")
-_CERT_TIPO=$(getParam $* "-tipo")
+_CERT_TIPO=$(getParam $* "-t")
 _FORCE=$(getParam $* "-force")
 
 _LOG_PATH="/var/log/letsencrypt"
@@ -24,16 +25,24 @@ _ACME_PATH=""
 # ARRUMANDO OS PATHS #
 ######################
 
-# ##
-# PATH
+
+# LOG
+if [[ -z "$_LOG_PATH" ]]; then
+	_LOG_PATH="/var/log/$_DOMINIO"
+fi
+
 if [[ ( "$_LOG_PATH" != "" )  && ( ! -d $_LOG_PATH ) ]]; then
 	 mkdir -p $_LOG_PATH
 fi
 
-# ##
-# PATH
+# 
+# CERTPATH
+if [[ -z "$_CERT_PATH" ]]; then
+	_CERT_PATH="$DOMFOLDER/$_DOMINIO/.tls"
+fi
+
 if [[ ( "$_CERT_PATH" != "" )  && ( ! -d $_CERT_PATH ) ]]; then
-	 mkdir -p $_CERT_PATH
+	 mkdir -p $_CERT_PATH	 
 fi
 
 _CERT_BUILDPATH="$_CERT_PATH/build"
@@ -69,7 +78,7 @@ cert_raiz_file="${_CERT_BUILDPATH}/${_CERT_TIPO}"
 # CRIA A PASTA DE LOG e BACKUP
 DATE=`date +%Y%m%d`
 _LOG_PATH="${_LOG_PATH}/$DATE"
-_BK_PATH="${_CERT_PATH}/.bk/$DATE"
+_BK_PATH="${_CERT_PATH}/.git"
 
  mkdir -p ${_LOG_PATH}
  mkdir -p ${_CERT_BUILDPATH}
@@ -123,9 +132,9 @@ CMD_data="-subj '/CN=$_DOMINIO' -reqexts SAN \
 function self_run(){
 	if [[ ( ! -z "$_DOMINIO" ) && ( ! -z "$_CERT_PATH" ) && ( -d $_CERT_PATH ) && ( -d $_CERT_BUILDPATH ) ]]; then
 		# SE ESPECIFICADO O TIPO
-		if [[ ($_CERT_TIPO = "ECDSA" ) || ($_CERT_TIPO = "RSA" ) ]]; then
+		if [[ ($_CERT_TIPO = "ECDSA" ) || ($_CERT_TIPO = "RSA" ) ]]; then			
 
-			openssl dhparam -out "$original_dhparam_file" 8192
+			openssl dhparam -out "$original_dhparam_file" 8192 &
 
 			gen_cert
 
@@ -183,12 +192,16 @@ function self_run(){
 						ERR "FALHA ao criar/assinar '$_CERT_TIPO', chave privada vazia ou inexistente."
 						self_run &
 					else
+						saveModBK # commita da altração
+
 						OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-						. /etc/init.d/nginx restart
+						. /etc/init.d/nginx reload
 					fi
 				else
+					saveModBK # commita da altração
+
 					OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-					. /etc/init.d/nginx restart
+					. /etc/init.d/nginx reload
 				fi
 			else
 				ERR "FALHA ao criar/assinar '$_CERT_TIPO', renovação não foi efetivada."

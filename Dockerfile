@@ -26,7 +26,9 @@ ENV ISDOCKERIMAGE=1
 ENV DOMFOLDER="/var/www"
 
 # ON INSTALL
-RUN yes | rm -rf /etc/nginx/conf.d/* && \    
+RUN apk update && \
+    apk add wget gzip nano htop git && \
+    yes | rm -rf /etc/nginx/conf.d/* && \    
     chmod +x /etc/nginx/.acme.renew && \
     chmod +x /etc/nginx/acme.renew && \
     chmod +x /etc/nginx/acme.service && \

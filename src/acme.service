@@ -3,33 +3,24 @@
 echo `date +%Y%m%d` >> /etc/nginx/.log
 
 if [[ "$TLSFOLDER" = "" ]]; then
-  TLSFOLDER="/etc/nginx/ssl"
+  TLSFOLDER="/var/www"  
 fi
+
+TLSFOLDER=${TLSFOLDER%/}
 
 if [[ ! -d "$TLSFOLDER" ]]; then
     mkdir -p "$TLSFOLDER"
 fi
 
-function reload(){
-  if [ "$(command -v \"systemctl\")" = "" ]; then 
-      if [ "$(command -v \"service\")" = "" ]; then 
-          nginx -s reload
-      else 
-          service enable restart
-      fi
-  else 
-      systemctl restart nginx
-  fi
-}
-
-for d in $TLSFOLDER ; do
+for d in "$TLSFOLDER/*" ; do
     [ -L "${d%/}" ] && continue
 
+    d=${d%/}
+
     if [[ ( -d "$d" ) && ( ! -d "$d/build" ) ]]; then
-        local dom="$(basename -- $d)"
-        chmod +x ./acme.renew
-        chmod +x ./.acme.renew
-        ./acme.renew    -dom "$dom" -path "$d" -tipo "ECDSA" \
+        renewdom="$(basename -- $d)"
+        
+        ./acme.renew    -dom "$renewdom" -path "$d" -t "ECDSA" \
                         -cfkey "$CLOUDFLARE_KEY" -cfmail "$CLOUDFLARE_MAIL"
     fi
 done
