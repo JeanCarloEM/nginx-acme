@@ -31,15 +31,14 @@ RUN apk update && \
     yes | rm -rf /etc/nginx/conf.d/* && \    
     chmod +x /etc/nginx/.acme.renew && \
     chmod +x /etc/nginx/acme.renew && \
-    chmod +x /etc/nginx/acme.service && \
-    chmod +x /etc/nginx/entrypoint.sh && \
+    chmod +x /etc/nginx/acme.service && \    
     chmod +x /etc/nginx/.acme.renew && \
-    (crontab -l 2>/dev/null; echo "* * * * * /etc/nginx/acme.service") | crontab - &&  \
-    (crontab -l 2>/dev/null; echo "@reboot   /etc/nginx/start.sh") | crontab - && \
-    (crontab -l 2>/dev/null; echo "@reboot   nginx -g 'daemon off;'") | crontab -
+    (crontab -l 2>/dev/null; echo "* * * * * /etc/nginx/acme.service") | crontab - && \    
+    (crontab -l 2>/dev/null; echo "@reboot   nginx -g 'daemon off;'") | crontab - && \
+    crond
 
 # ON START
-#ENTRYPOINT /etc/nginx/entrypoint.sh
+# ENTRYPOINT /etc/nginx/entrypoint.sh
 
 # EXPOR PORTA
 EXPOSE 80/tcp
