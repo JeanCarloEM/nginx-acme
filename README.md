@@ -81,7 +81,9 @@ docker run  --name nginx-main \
             -v /etc/nginx/conf.d/:/etc/nginx/conf.d/ \
             -v /var/www:/var/www \
             -d -p 80:80 -p 443:443 \
-            -e PROXYPASS=<ip-or-socker>  \            
+            -e PROXYPASS=<ip-or-socker> \
+            -e CF_Token=<you-token> \
+            -e CF_Account_ID=<you-account-id> \
             jeancarloem/nginx-acme:latest
 ````
 
@@ -94,5 +96,7 @@ docker run  --name nginx-main \
             -v /var/www:/var/www \
             -d -p 80:80 -p 443:443 \
             -e PHPASS=<ip-or-socker> \
+            -e CF_Token=<you-token> \
+            -e CF_Account_ID=<you-account-id> \
             jeancarloem/nginx-acme:latest
 ````
