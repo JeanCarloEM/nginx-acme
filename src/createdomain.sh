@@ -6,11 +6,6 @@ _DOMINIO=$(getParam $* "-dom")
 _USER=$(getParam $* "-user")
 _dom_path_=$(getParam $* "-path")
 
-# VALIDADORES DENOME DE USUARIO E NOME DE DOMINIO
-REGEXDOM='^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$'
-REGEXNUM='^[0-9]+$'
-REGEXUSER='^[a-zA-Z_]+[a-zA-Z0-9_]+$'
-
 if [[ -z "$_dom_path_" ]]; then
 	_dom_path_=$DOMFOLDER
 fi

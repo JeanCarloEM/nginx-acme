@@ -5,11 +5,22 @@
 # -tipo :: opcional ECDSA/RSA
 
 source ./.functions
+
+if [ $(pidof "`basename $0`" -o $$ | wc -w ) -gt 4 ]; then
+    LOG "Processo já em execucao"
+    exit 0
+fi
+
 source ./.acme.renew
 
 # DNS - CONFIGURACOES DO CLOUDFLARE, SUBSTITUA
-CF_Key=$(getParam $* "-cfkey")
-CF_Email=$(getParam $* "-cfmail")
+if [ -z "$CF_Key" ]; then
+	CF_Key=$(getParam $* "-cfkey")
+fi
+
+if [ -z "$CF_Email" ]; then
+	CF_Email=$(getParam $* "-cfmail")
+fi
 
 # PARAMETROS
 _DOMINIO=$(getParam $* "-dom")
@@ -80,8 +91,11 @@ DATE=`date +%Y%m%d`
 _LOG_PATH="${_LOG_PATH}/$DATE"
 _BK_PATH="${_CERT_PATH}/.git"
 
- mkdir -p ${_LOG_PATH}
- mkdir -p ${_CERT_BUILDPATH}
+# REMOVE BUILD ON EXIT
+trap "rm -rf ${_CERT_BUILDPATH}" EXIT INT KILL TERM
+
+mkdir -p ${_LOG_PATH}
+mkdir -p ${_CERT_BUILDPATH}
 
 # VERIFICA SE O CERTIFICADO EXISTE E SE AINDA EH VALIDO
 # CAPITURA O 'return' E NAO O ECHO '='
@@ -106,7 +120,12 @@ LOG "> LogPath..: ${_LOG_PATH}"
 LOG "> Renovar?.: ${_RENOVAR}"
 
 if [[ ( -z $_RENOVAR ) || ( "$_RENOVAR" = "0" ) ]]; then
-	exit 0
+	exit 1
+fi
+
+if [[ ! $_DOMINIO =~ $REGEXDOM ]]; then
+	ERR "Domímio '$_DOMINIO' não aprovado pela regex."
+	exit 2
 fi
 
 #
@@ -134,7 +153,7 @@ function self_run(){
 		# SE ESPECIFICADO O TIPO
 		if [[ ($_CERT_TIPO = "ECDSA" ) || ($_CERT_TIPO = "RSA" ) ]]; then			
 
-			openssl dhparam -out "$original_dhparam_file" 8192 &
+			openssl dhparam -out "$original_dhparam_file" 8192 > /dev/null 2>&1 &
 
 			gen_cert
 
@@ -190,7 +209,7 @@ function self_run(){
 					# SE A CHAVE ORIGINAL NAO EXISTIR OU FOR VAZIA
 					if [[ (! -f $original_key_file ) || (! -s $original_key_file ) ]]; then
 						ERR "FALHA ao criar/assinar '$_CERT_TIPO', chave privada vazia ou inexistente."
-						self_run &
+						self_run
 					else
 						saveModBK # commita da altração
 
@@ -205,7 +224,7 @@ function self_run(){
 				fi
 			else
 				ERR "FALHA ao criar/assinar '$_CERT_TIPO', renovação não foi efetivada."
-				self_run &
+				self_run
 			fi
 
 		# NAO FOI INFORMADO O TIPO	

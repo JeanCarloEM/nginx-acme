@@ -27,19 +27,19 @@ ENV DOMFOLDER="/var/www"
 
 # ON INSTALL
 RUN apk update && \
-    apk add wget gzip nano htop git && \
+    apk add --no-cach curl openrc busybox-initscripts nano htop git && \    
     yes | rm -rf /etc/nginx/conf.d/* && \    
     chmod +x /etc/nginx/.acme.renew && \
     chmod +x /etc/nginx/acme.renew && \
     chmod +x /etc/nginx/acme.service && \
     chmod +x /etc/nginx/entrypoint.sh && \
     chmod +x /etc/nginx/.acme.renew && \
-    (crontab -l 2>/dev/null; echo "* * * * * /bin/bash '/etc/nginx/acme.service'") | crontab - &&  \
-    (crontab -l 2>/dev/null; echo "@reboot     /etc/nginx/start.sh") | crontab - && \
-    (crontab -l 2>/dev/null; echo "@reboot     nginx -g 'daemon off;'") | crontab -
+    (crontab -l 2>/dev/null; echo "* * * * * /etc/nginx/acme.service") | crontab - &&  \
+    (crontab -l 2>/dev/null; echo "@reboot   /etc/nginx/start.sh") | crontab - && \
+    (crontab -l 2>/dev/null; echo "@reboot   nginx -g 'daemon off;'") | crontab -
 
 # ON START
-ENTRYPOINT ["/etc/nginx/entrypoint.sh"]
+#ENTRYPOINT /etc/nginx/entrypoint.sh
 
 # EXPOR PORTA
 EXPOSE 80/tcp

@@ -1,5 +1,12 @@
 #!/bin/bash
 
+source ./.functions
+
+if [ $(pidof "`basename $0`" -o $$ | wc -w ) -gt 4 ]; then
+    LOG "Processo já em execucao"
+    exit 0
+fi
+
 echo `date +%Y%m%d` >> /etc/nginx/.log
 
 if [[ "$TLSFOLDER" = "" ]]; then
@@ -12,13 +19,17 @@ if [[ ! -d "$TLSFOLDER" ]]; then
     mkdir -p "$TLSFOLDER"
 fi
 
-for d in "$TLSFOLDER/*" ; do
-    [ -L "${d%/}" ] && continue
+LOG "Varrendo diretório '$TLSFOLDER'..."
 
-    d=${d%/}
+shopt -s dotglob
+find $TLSFOLDER/* -prune -type d | while IFS= read -r d; do
+    d=${d%/}        
+    LOG "Pasta $d"
+    trap "rm -rf $d/build" EXIT INT KILL TERM
 
     if [[ ( -d "$d" ) && ( ! -d "$d/build" ) ]]; then
-        renewdom="$(basename -- $d)"
+        renewdom="$(basename $d)"
+        LOG "Domínio '$renewdom='..."
         
         ./acme.renew    -dom "$renewdom" -path "$d" -t "ECDSA" \
                         -cfkey "$CLOUDFLARE_KEY" -cfmail "$CLOUDFLARE_MAIL"

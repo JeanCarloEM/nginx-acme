@@ -119,7 +119,7 @@ function gen_ecdsa(){
 #
 # GERA O COMANDO PARA CRIAR/_RENOVAR O CERTIFICADO
 function ACME_RUN(){
-	ACME_RUN_CMD=". ${_ACME_PATH}/acme.sh --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
 }
 
 #
@@ -127,7 +127,7 @@ function ACME_RUN(){
 # https://kb.virtubox.net/knowledgebase/how-to-issue-wildcard-ssl-certificate-with-acme-sh-nginx/
 function ACME_INSTALL(){
 	# https://github.com/Neilpang/acme.sh
-	ACME_RUN_CMD=". ${_ACME_PATH}/acme.sh --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
 }
 
 #
@@ -135,12 +135,35 @@ function ACME_INSTALL(){
 #
 function WRITE_CMD(){
 	yes |  rm -f ${_ACME_PATH}/eval_cmd.sh
+	echo "#!/bin/bash" > ${_ACME_PATH}/eval_cmd.sh
 
-	echo "export CF_Key=\"$CF_Key\"" >> ${_ACME_PATH}/eval_cmd.sh
-	echo "export CF_Email=\"$CF_Email\"" >> ${_ACME_PATH}/eval_cmd.sh
+	if [ ! -z "$CF_Key" ]; then
+		echo "export CF_Key='${CF_Key}'" >> ${_ACME_PATH}/eval_cmd.sh
+	fi
+
+	if [ ! -z "$CF_Email" ]; then
+		echo "export CF_Email='${CF_Email}'" >> ${_ACME_PATH}/eval_cmd.sh
+	fi
+
+	if [ ! -z "$CF_Token" ]; then
+		echo "export CF_Token='${CF_Token}'" >> ${_ACME_PATH}/eval_cmd.sh
+	fi	
+
+	if [ ! -z "$CF_Account_ID" ]; then
+		echo "export CF_Account_ID='${CF_Account_ID}'" >> ${_ACME_PATH}/eval_cmd.sh
+	fi		
+
+	if [ ! -z "$CF_Zone_ID" ]; then
+		echo "export CF_Zone_ID='${CF_Zone_ID}'" >> ${_ACME_PATH}/eval_cmd.sh
+	fi		
+
 	echo $1 >> ${_ACME_PATH}/eval_cmd.sh
 
-	 chmod +x ${_ACME_PATH}/eval_cmd.sh
+	echo " ----------------- ${CF_Key} "
+	cat ${_ACME_PATH}/eval_cmd.sh
+	echo " "
+
+	chmod +x ${_ACME_PATH}/eval_cmd.sh
 }
 
 #
@@ -161,6 +184,11 @@ function acme_sign() {
 
 	# EXECUTA
 	. ${_ACME_PATH}/eval_cmd.sh	
+
+	if [[ ! -f $csr_file ]]; then
+		ERR "Execução RUN falhou!"
+		exit 1
+	fi
 
 	# INSTALANDO
 	LOG "Gerando acme 'install'"
