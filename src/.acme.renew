@@ -257,12 +257,14 @@ function saveModBK(){
 		LOG "Commit/backup do novo certificado..."
 
 		if [ ! -d "$DOMFOLDER/.git" ]; then						
-			echo "*\n!*/\n!*/*" > "$DOMFOLDER/.gitignore"
+			echo "*\n*\n*/\n*/*" > "$DOMFOLDER/.gitignore"
+			echo "*\n!*/.tls\n*\n!*/.tls/\n*\n!*/.tls/*" > "$DOMFOLDER/.gitignore"
+			echo "*\n!*/.alternativenames" > "$DOMFOLDER/.gitignore"
 			git init -q "$DOMFOLDER/"
 		fi
 
 		git add "$_CERT_PATH/."
-		git commit -m "$_DOMINIO $(`date +%d/%m/%Y-%H:%M`)"
+		git commit -m "Novo TLS de '$_DOMINIO' $(`date +%d/%m/%Y-%H:%M`)"
 
 		LOG "Commit/backup concluído."		
 	fi
