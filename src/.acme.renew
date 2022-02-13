@@ -25,6 +25,13 @@ function getTLSRemaningDays() {
 }
 
 #
+#
+#
+function validDay(){
+	echo date -d @$(date -d "`openssl x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
+}
+
+#
 # RETORNA 0 SE NAO HOUVER NECESSIDADE DE RENOVAR, E UM SE HOUVER
 # VERIFICA SE O CERTIFICADO EXSISTE E SE AINDA EH VALIDO
 #
@@ -59,7 +66,7 @@ function check_cert_still_valid () {
 	local exp=$(openssl x509 -checkend $t__dias -in $certFilePath)
 
 	# VERIFICA A DATA EM QUE VAI EXPERIR
-	local dia=$(openssl x509 -enddate -noout -in $certFilePath)
+	local dia=$(validDay $certFilePath)
 
 	# OBTEM A QUANTIDADE DE DIAS QUE FALTAM
 	# CAPITURO O ECHO '=' E NÃO O 'return' COM '=$?'
