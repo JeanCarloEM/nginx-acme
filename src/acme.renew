@@ -146,7 +146,7 @@ CMD_data="-subj '${_CUSTOM_SUBJECT}/CN=$_DOMINIO' -reqexts SAN \
 -config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
 
 # SELF SIGNED CERTIFICATION
-while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) ]]; do
+while [[ ( ! -f $original_cert_file ) && ( ! -f $original_key_file ) ]]; do
 	LOG 'Certificado Inexistente. Criando certificado auto assinado...'
 	___CMD="openssl req -x509 -nodes -days 10 -newkey ec:<(openssl ecparam -name secp384r1) -sha512 -keyout '$original_key_file' -out '$original_cert_file' $CMD_data"
 	LOG $___CMD
