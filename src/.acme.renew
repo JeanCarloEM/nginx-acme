@@ -127,7 +127,7 @@ function gen_ecdsa(){
 #
 # GERA O COMANDO PARA CRIAR/_RENOVAR O CERTIFICADO
 function ACME_RUN(){
-	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh $USETEST --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
 }
 
 #
@@ -135,7 +135,7 @@ function ACME_RUN(){
 # https://kb.virtubox.net/knowledgebase/how-to-issue-wildcard-ssl-certificate-with-acme-sh-nginx/
 function ACME_INSTALL(){
 	# https://github.com/Neilpang/acme.sh
-	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --key-file \"$original_key_file\" --cert-file \"$original_cert_file\" --ca-file \"$original_ca_file\" --fullchain-file \"$original_fullchain_file\""
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh $USETEST --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --key-file \"$original_key_file\" --cert-file \"$original_cert_file\" --ca-file \"$original_ca_file\" --fullchain-file \"$original_fullchain_file\""
 }
 
 #
@@ -178,25 +178,30 @@ function WRITE_CMD(){
 #
 # GERA O CERTIFICADO ECDSA
 function acme_sign() {
-	ST "Executando ACME para '$_CERT_TIPO'..."
-	LOG "Gerando acme 'run'"
+	cct_run_acme=-1
 
-	# CRIANDO/RENOVANDO
-	ACME_RUN $1
-	RUN="$ACME_RUN_CMD $2"
+	#while [[ ]]; do
+		if [[ $cct_run_acme -gt 1 ]]; then
+			ERR "<retry: $cct_run_acme> Execução RUN falhou! Retentando..."		
+		fi
 
-	WRITE_CMD "$RUN"
-	
-	LOG "   $RUN"
-	LOG ">> Executando acme 'run'..."
+		cct_run_acme=$((cct_run_acme + 1))
 
-	# EXECUTA
-	. ${_ACME_PATH}/eval_cmd.sh	
+		ST "<retry: $cct_run_acme> Executando ACME para '$_CERT_TIPO'..."
+		LOG "<retry: $cct_run_acme> Gerando acme 'run'"
 
-	if [[ ! -f $csr_file ]]; then
-		ERR "Execução RUN falhou!"
-		exit 1
-	fi
+		# CRIANDO/RENOVANDO
+		ACME_RUN $1
+		RUN="$ACME_RUN_CMD $2"
+
+		WRITE_CMD "$RUN"
+		
+		LOG "<retry: $cct_run_acme>    $RUN"
+		LOG "<retry: $cct_run_acme> >> Executando acme 'run'..."
+
+		# EXECUTA
+		. ${_ACME_PATH}/eval_cmd.sh			
+	#done	
 
 	# INSTALANDO
 	LOG "Gerando acme 'install'"
@@ -238,8 +243,8 @@ function gen_cert() {
 #
 #
 function gencsr(){	
-	# SE FOR PARA FORCAR OU A CHAVE FOR MAIS ANTIGA QUE 5 DIAS
-	if [[ ("$_FORCE" -eq "1") || (! -s $key_file) || ( "$(stat -c %Z "$key_file")" -le "$(echo "(" $(date -d "now" +%s) - 432000 ")" | bc)" ) ]]; then
+	# SE FOR PARA FORCAR OU A CHAVE FOR MAIS ANTIGA QUE 3 DIAS
+	if [[ ("$_FORCE" -eq "1") || (! -s $key_file) || ( "$(stat -c %Z "$key_file")" -le "$(echo "(" $(date -d "now" +%s) - 259000 ")" | bc)" ) ]]; then
 		ST "(Re)gerar Key/CSR"
 		
 		if [[ $_CERT_TIPO = "ECDSA" ]]; then

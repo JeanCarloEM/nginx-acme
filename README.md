@@ -100,3 +100,5 @@ docker run  --name nginx-main \
             -e CF_Account_ID=<you-account-id> \
             jeancarloem/nginx-acme:latest
 ````
+
+For test add ``-e USETEST=test``

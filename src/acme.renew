@@ -149,7 +149,7 @@ CMD_data="-subj '${_CUSTOM_SUBJECT}/CN=$_DOMINIO' -reqexts SAN \
 -config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
 
 # SELF SIGNED CERTIFICATION
-while [[ ( ! -f $original_cert_file ) && ( ! -f $original_key_file ) ]]; do
+while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) || ( $(openssl x509 -checkend 0 -in $certFilePath) != "Certificate will not expire" ) ]]; do
 	LOG 'Certificado Inexistente. Criando certificado auto assinado...'
 	___CMD="openssl req -x509 -nodes -days 10 -newkey ec:<(openssl ecparam -name secp384r1) -sha512 -keyout '$original_key_file' -out '$original_cert_file' $CMD_data"
 	LOG $___CMD
@@ -160,6 +160,10 @@ while [[ ( ! -f $original_cert_file ) && ( ! -f $original_key_file ) ]]; do
 		realod_nginx
 	fi		
 done
+
+if [[ ! -z "$USETEST"]]; then
+	USETEST="--test"
+fi
 
 #
 #
@@ -187,9 +191,7 @@ function self_run(){
 			# O CERTIFICADO BUID FOI RENOVADO
 			# COPIA PARA _CERT_PATH
 			if [[ "$_renovar" -eq "0" ]]; then
-				ST "Certificado $motor '$_CERT_TIPO' criado com sucesso. Copiando..."
-				yes |  /bin/cp -f ${cert_raiz_file}.* "$_CERT_PATH/"
-				yes |  /bin/cp -f ${cert_raiz_file}* "$_CERT_PATH/"
+				ST "Certificado '$_CERT_TIPO' criado com sucesso. Verificando instalação..."				
 
 				# SE A CHAVE ORIGINAL NAO EXISTIR OU FOR VAZIA
 				if [[ (! -f $original_key_file ) || (! -s $original_key_file ) ]]; then
