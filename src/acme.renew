@@ -80,7 +80,9 @@ fullchain_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.fullchain.pem"
 
 # O NOME DO CERTIFICADO ORIGINAL
 original_dhparam_file="${_CERT_PATH}/dhparam.pem"
+original_ca_file="${_CERT_BUILDPATH}/${_CERT_TIPO}.ca.pem"
 original_key_file="${_CERT_PATH}/${_CERT_TIPO}.key"
+original_cert_file="${_CERT_PATH}/${_CERT_TIPO}.pem"
 original_fullchain_file="${_CERT_PATH}/${_CERT_TIPO}.fullchain.pem"
 
 # USADO PARA COPIAR TUDO QUE COMECAO COM O NOME
@@ -142,6 +144,19 @@ fi
 # COMO TANTO PARA RSA QUANTO PARA ECDSA
 CMD_data="-subj '${_CUSTOM_SUBJECT}/CN=$_DOMINIO' -reqexts SAN \
 -config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
+
+#
+while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) ]]; do
+	LOG 'Certificado Inexistente. Criando certificado auto assinado...'
+	___CMD="openssl req -x509 -nodes -days 10 -newkey ec:<(openssl ecparam -name secp384r1) -sha512 -keyout '$original_key_file' -out '$original_cert_file' $CMD_data"
+	LOG $___CMD
+	eval $___CMD
+
+	if [[ ( -f $original_cert_file ) && ( -f $original_key_file ) ]]; then		
+		yes | cp -f $original_cert_file $original_fullchain_file		
+		realod_nginx
+	fi		
+done
 
 #
 #
@@ -213,13 +228,13 @@ function self_run(){
 						saveModBK # faz backup
 			
 						OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-						. /etc/init.d/nginx reload
+						realod_nginx
 					fi
 				else
 					saveModBK # faz backup
 
 					OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
-					. /etc/init.d/nginx reload
+					realod_nginx
 				fi
 			else
 				ERR "FALHA ao criar/assinar '$_CERT_TIPO', renovação não foi efetivada."

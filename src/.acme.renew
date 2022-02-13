@@ -127,7 +127,7 @@ function ACME_RUN(){
 # https://kb.virtubox.net/knowledgebase/how-to-issue-wildcard-ssl-certificate-with-acme-sh-nginx/
 function ACME_INSTALL(){
 	# https://github.com/Neilpang/acme.sh
-	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --key-file \"$original_key_file\" --cert-file \"$original_cert_file\" --ca-file \"$original_ca_file\" --fullchain-file \"$original_fullchain_file\""
 }
 
 #

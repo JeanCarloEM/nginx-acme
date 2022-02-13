@@ -216,3 +216,7 @@ function __RWXAcess (){
 	setfacl -R -m d:o::- $1
 	find $1 -type d -exec setfacl -m default:o::- {} +
 }
+
+function realod_nginx(){
+	. /etc/init.d/nginx reload
+}
