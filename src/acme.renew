@@ -140,9 +140,8 @@ fi
 #
 #
 # COMO TANTO PARA RSA QUANTO PARA ECDSA
-CMD_data="-subj '/CN=$_DOMINIO' -reqexts SAN \
+CMD_data="-subj '${_CUSTOM_SUBJECT}/CN=$_DOMINIO' -reqexts SAN \
 -config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
-
 
 #
 #
