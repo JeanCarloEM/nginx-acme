@@ -149,11 +149,11 @@ CMD_data="-subj '${_CUSTOM_SUBJECT}/CN=$_DOMINIO' -reqexts SAN \
 -config <(cat /etc/ssl/openssl.cnf <(printf \"[SAN]\nsubjectAltName=${ATERNAMES}\"))"
 
 # SELF SIGNED CERTIFICATION
-while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) || ( $(openssl x509 -checkend 0 -in $certFilePath) != "Certificate will not expire" ) ]]; do
+while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) || ( $(openssl x509 -checkend 0 -in $original_cert_file) != "Certificate will not expire" ) ]]; do
 	LOG 'Certificado Inexistente. Criando certificado auto assinado...'
 	___CMD="openssl req -x509 -nodes -days 10 -newkey ec:<(openssl ecparam -name secp384r1) -sha512 -keyout '$original_key_file' -out '$original_cert_file' $CMD_data"
-	LOG $___CMD
-	eval $___CMD
+	LOG "$___CMD"
+	eval "${___CMD}"
 
 	if [[ ( -f $original_cert_file ) && ( -f $original_key_file ) ]]; then		
 		yes | cp -f $original_cert_file $original_fullchain_file		
@@ -161,7 +161,7 @@ while [[ ( ! -f $original_cert_file ) || ( ! -f $original_key_file ) || ( $(open
 	fi		
 done
 
-if [[ ! -z "$USETEST"]]; then
+if [[ ! -z "$USETEST" ]]; then
 	USETEST="--test"
 fi
 

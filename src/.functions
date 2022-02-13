@@ -58,10 +58,10 @@ function reload(){
       if [ "$(command -v \"service\")" = "" ]; then 
           nginx -s reload
       else 
-          service nginx restart
+          service nginx reload
       fi
   else 
-      systemctl restart nginx
+      systemctl restart reload
   fi
 }
 
@@ -218,5 +218,5 @@ function __RWXAcess (){
 }
 
 function realod_nginx(){
-	. /etc/init.d/nginx reload
+	reload
 }
