@@ -27,7 +27,7 @@ ENV DOMFOLDER="/var/www"
 
 # ON INSTALL
 RUN apk update && \
-    apk add --no-cach curl openrc busybox-initscripts nano htop git && \    
+    apk add --no-cach curl openrc busybox-initscripts nano htop gzip && \    
     yes | rm -rf /etc/nginx/conf.d/* && \    
     chmod +x /etc/nginx/.acme.renew && \
     chmod +x /etc/nginx/acme.renew && \

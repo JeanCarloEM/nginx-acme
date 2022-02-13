@@ -89,7 +89,7 @@ cert_raiz_file="${_CERT_BUILDPATH}/${_CERT_TIPO}"
 # CRIA A PASTA DE LOG e BACKUP
 DATE=`date +%Y%m%d`
 _LOG_PATH="${_LOG_PATH}/$DATE"
-_BK_PATH="${_CERT_PATH}/.git"
+_BK_PATH="${_CERT_PATH}/.bk"
 
 # REMOVE BUILD ON EXIT
 trap "rm -rf ${_CERT_BUILDPATH}" EXIT INT KILL TERM
@@ -211,13 +211,13 @@ function self_run(){
 						ERR "FALHA ao criar/assinar '$_CERT_TIPO', chave privada vazia ou inexistente."
 						self_run
 					else
-						saveModBK # commita da altração
-
+						saveModBK # faz backup
+			
 						OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
 						. /etc/init.d/nginx reload
 					fi
 				else
-					saveModBK # commita da altração
+					saveModBK # faz backup
 
 					OK "Certificado '$_CERT_TIPO' para '$_DOMINIO' criado e assinado com sucesso!"
 					. /etc/init.d/nginx reload

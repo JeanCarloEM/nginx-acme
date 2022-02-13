@@ -119,7 +119,7 @@ function gen_ecdsa(){
 #
 # GERA O COMANDO PARA CRIAR/_RENOVAR O CERTIFICADO
 function ACME_RUN(){
-	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.RUN.log\" --force --signcsr --csr \"$csr_file\" --key-file \"$key_file\" --dns dns_cf"
 }
 
 #
@@ -127,7 +127,7 @@ function ACME_RUN(){
 # https://kb.virtubox.net/knowledgebase/how-to-issue-wildcard-ssl-certificate-with-acme-sh-nginx/
 function ACME_INSTALL(){
 	# https://github.com/Neilpang/acme.sh
-	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
+	ACME_RUN_CMD=". ${_ACME_PATH}acme.sh --accountemail "$CF_Email" --accountkey" $CF_Key" --set-default-ca --server letsencrypt --log \"${_LOG_PATH}/$_DOMINIO.acme.$1.INTALL.log\" --install-cert -d $_DOMINIO --cert-file \"$cert_file\" --ca-file \"$ca_file\" --fullchain-file \"$fullchain_file\""
 }
 
 #
@@ -230,7 +230,7 @@ function gen_cert() {
 #
 #
 function gencsr(){	
-	# SE FOR PAARA FORCAR OU A CHAVE FOR MAIS ANTIGA QUE 5 DIAS
+	# SE FOR PARA FORCAR OU A CHAVE FOR MAIS ANTIGA QUE 5 DIAS
 	if [[ ("$_FORCE" -eq "1") || (! -s $key_file) || ( "$(stat -c %Z "$key_file")" -le "$(echo "(" $(date -d "now" +%s) - 432000 ")" | bc)" ) ]]; then
 		ST "(Re)gerar Key/CSR"
 		
@@ -249,23 +249,26 @@ function gencsr(){
 	fi	
 }
 
+
 #
 # FAZ O BACKUP/COMMIT DAS MUDANCAS
 #
 function saveModBK(){
-	if [ ! -d "$_BK_PATH" ]; then	
-		LOG "Commit/backup do novo certificado..."
+	LOG "Backuping..."
 
-		if [ ! -d "$DOMFOLDER/.git" ]; then						
-			echo "*\n*\n*/\n*/*" > "$DOMFOLDER/.gitignore"
-			echo "*\n!*/.tls\n*\n!*/.tls/\n*\n!*/.tls/*" > "$DOMFOLDER/.gitignore"
-			echo "*\n!*/.alternativenames" > "$DOMFOLDER/.gitignore"
-			git init -q "$DOMFOLDER/"
-		fi
+	if [ ! -d "$_BK_PATH" ]; then
+		mkdir -p $_BK_PATH
+	fi
 
-		git add "$_CERT_PATH/."
-		git commit -m "Novo TLS de '$_DOMINIO' $(`date +%d/%m/%Y-%H:%M`)"
+	if [ ( -d "$_BK_PATH" ) && ( -f $key_file )]; then
+		LOG "Limpando..."
+		find $_BK_PATH/* -type f -mtime +180 -delete
 
-		LOG "Commit/backup concluído."		
+		LOG "Criando?..."
+		if [ ! -f "$_BK_PATH/${s384}.zip" ]; then		
+			s384=($(sha384sum "$key_file"))
+			LOG "Novo sha384 $s384"
+			tar -zcvf "$_BK_PATH/${s384}.zip" "${_CERT_BUILDPATH}"
+		fi		
 	fi
 }
