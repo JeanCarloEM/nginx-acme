@@ -8,10 +8,10 @@ source ./.functions
 # https://d-herrmann.de/2016/01/bash-one-liner-to-calculate-remaining-days-of-ssl-certificates/
 function getTLSRemaningDays() {
 	# DESMEMBRADOS
-	#local pre1=$(date -d "`openssl x509 -in $1 -text -noout | grep "Not After" | cut -c 25-`" +%s)
+	#local pre1=$(date -d "`openssl x509 -in *.crt -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
 	#local pre2=$(date -d "now" +%s)
 	#local pre3=`expr $pre1 - $pre2`
-	#echo $( echo "(" `expr $pre3 / 86400` ")" | bc )
+	#echo $( echo "(" `expr $pre3 / 86400` ")" )
 
 	#
 	# O ECHO EH CAPITURADO POR UMA VARIA AO SETA-LA COM IGUAL
@@ -21,7 +21,7 @@ function getTLSRemaningDays() {
 	#
 
 	# UNIFICADO
-	echo "(" $(date -d "`openssl x509 -in $1 -text -noout | grep "Not After" | cut -c 25-`" +%s) - $(date -d "now" +%s) ")" / 86400 | bc	
+	echo $(( "(" $(date -d "`openssl x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s) - $(date -d "now" +%s) ")" / 86400 ))
 }
 
 #
