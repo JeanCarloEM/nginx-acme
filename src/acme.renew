@@ -13,6 +13,9 @@ fi
 
 source ./.acme.renew
 
+# renew with 36 days to go.
+_RENEW_DAY_TO_GO=20
+
 # DNS - CONFIGURACOES DO CLOUDFLARE, SUBSTITUA
 if [ -z "$CF_Key" ]; then
 	CF_Key=$(getParam $* "-cfkey")

@@ -54,8 +54,9 @@ function check_cert_still_valid () {
 	# VERIFICA SE VAI EXPIRAR
 	# https://stackoverflow.com/questions/21297853/how-to-determine-ssl-cert-expiration-date-from-a-pem-encoded-certificate
 	# RETORNA 1 SE EXPIROU OU FOR EXPIRAR E 0 EM CASO DE NAO HAVER EXPIRADO
-	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS 10 DIAS (10*24*60*60=864000)
-	local exp=$(openssl x509 -checkend 864000 -in $certFilePath)
+	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS ?? DIAS (??*24*60*60=864000)
+	t__dias=$(($_RENEW_DAY_TO_GO * 24 * 60 * 60))
+	local exp=$(openssl x509 -checkend $t__dias -in $certFilePath)
 
 	# VERIFICA A DATA EM QUE VAI EXPERIR
 	local dia=$(openssl x509 -enddate -noout -in $certFilePath)
@@ -72,14 +73,14 @@ function check_cert_still_valid () {
 
 	#
 	# https://letsencrypt.org/docs/faq/
-	# EH REODMENDADO RENOVAR A CADA 60 DIAS, MESMO QUE EXPIRE APENAS EM 90 DIAS
-	# POR ISSO, SE ESTIVER FALTANDO 10 DIAS (90-10=80) NOS RENOVAMOS
+	# EH RECOMENDADO RENOVAR A CADA 60 DIAS, MESMO QUE EXPIRE APENAS EM 90 DIAS
+	# POR ISSO, SE ESTIVER FALTANDO _RENEW_DAY_TO_GO NOS RENOVAMOS
 	#
-	if [[ ( ( "$exp" != "Certificate will not expire" ) && ( "$exp" != "0" ) ) || ( "$restam" -le "10" ) ]] ; then
-		[[ "$2" = "" ]] && Log "Certificado expirado ou a experirar. Renovacao recomendada."		
+	if [[ ( ( "$exp" != "Certificate will not expire" ) && ( "$exp" != "0" ) ) || ( "$restam" -le $_RENEW_DAY_TO_GO ) ]] ; then
+		[[ "$2" = "" ]] && Log "Expired or expiring certificate. Recommended renovation."		
 		return 1
 	else
-		[[ "$2" = "" ]] && Log "O certificado esta atualizado. Se necessidade de renovacao ( > 10 dias )."		
+		[[ "$2" = "" ]] && Log "The certificate is up to date. No need for renewal ( > 10 days )."		
 		return 0
 	fi
 
