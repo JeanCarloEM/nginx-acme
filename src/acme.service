@@ -19,8 +19,6 @@ fi
 
 LOG "Varrendo diretório '$TLSFOLDER'..."
 
-echo "varrendo" > /etc/nginx/.log
-
 shopt -s dotglob
 find $TLSFOLDER/* -prune -type d | while IFS= read -r d; do
     d=${d%/}        

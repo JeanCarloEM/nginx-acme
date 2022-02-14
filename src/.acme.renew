@@ -8,7 +8,7 @@ source ./.functions
 # https://d-herrmann.de/2016/01/bash-one-liner-to-calculate-remaining-days-of-ssl-certificates/
 function getTLSRemaningDays() {
 	# DESMEMBRADOS
-	#local pre1=$(date -d "`openssl x509 -in *.crt -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
+	#local pre1=$(date -d "`openssl3 x509 -in *.crt -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
 	#local pre2=$(date -d "now" +%s)
 	#local pre3=`expr $pre1 - $pre2`
 	#echo $( echo "(" `expr $pre3 / 86400` ")" )
@@ -21,14 +21,14 @@ function getTLSRemaningDays() {
 	#
 
 	# UNIFICADO
-	echo $(( "(" $(date -d "`openssl x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s) - $(date -d "now" +%s) ")" / 86400 ))
+	echo $(( "(" $(date -d "`openssl3 x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s) - $(date -d "now" +%s) ")" / 86400 ))
 }
 
 #
 #
 #
 function validDay(){
-	echo date -d @$(date -d "`openssl x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
+	echo date -d @$(date -d "`openssl3 x509 -in $1 -text -noout | grep -i "Not[ ]*After=*" | cut -c 25-`" +%s)
 }
 
 #
@@ -63,7 +63,7 @@ function check_cert_still_valid () {
 	# RETORNA 1 SE EXPIROU OU FOR EXPIRAR E 0 EM CASO DE NAO HAVER EXPIRADO
 	# NEM FOR EXPIRAR DENTRO DO SEGUNDOS ESPECIFICADOS ?? DIAS (??*24*60*60=864000)
 	t__dias=$(($_RENEW_DAY_TO_GO * 24 * 60 * 60))
-	local exp=$(openssl x509 -checkend $t__dias -in $certFilePath)
+	local exp=$(openssl3 x509 -checkend $t__dias -in $certFilePath)
 
 	# VERIFICA A DATA EM QUE VAI EXPERIR
 	local dia=$(validDay $certFilePath)
@@ -102,7 +102,7 @@ function check_cert_still_valid () {
 function gen_rsa(){
 	LOG "Gerando comando..."
 
-	CMDCert="openssl req -newkey rsa:4096 -keyout ${key_file} -out ${csr_file} -sha512 -nodes $CMD_data"
+	CMDCert="openssl3 req -newkey rsa:4096 -keyout ${key_file} -out ${csr_file} -sha3-512 -nodes $CMD_data"
 
 	LOG "$CMDCert"
 	LOG "Executando..."
@@ -115,8 +115,8 @@ function gen_rsa(){
 function gen_ecdsa(){
 	LOG "Gerando comando..."
 
-	# https://devcentral.f5.com/articles/building-an-openssl-certificate-authority-creating-ecc-certificates-27912
-	CMDCert="openssl req -newkey ec:<(openssl ecparam -name secp384r1) -keyout ${key_file} -out ${csr_file} -sha512 -nodes $CMD_data"
+	# https://devcentral.f5.com/articles/building-an-openssl3-certificate-authority-creating-ecc-certificates-27912
+	CMDCert="openssl3 req -newkey ec:<(openssl3 ecparam -name secp384r1) -keyout ${key_file} -out ${csr_file} -sha3-512 -nodes $CMD_data"
 
 	LOG "$CMDCert"
 	LOG "Executando..."
@@ -165,11 +165,7 @@ function WRITE_CMD(){
 		echo "export CF_Zone_ID='${CF_Zone_ID}'" >> ${_ACME_PATH}/eval_cmd.sh
 	fi		
 
-	echo $1 >> ${_ACME_PATH}/eval_cmd.sh
-
-	echo " ----------------- ${CF_Key} "
-	cat ${_ACME_PATH}/eval_cmd.sh
-	echo " "
+	echo $1 >> ${_ACME_PATH}/eval_cmd.sh	
 
 	chmod +x ${_ACME_PATH}/eval_cmd.sh
 }
@@ -178,8 +174,7 @@ function WRITE_CMD(){
 #
 # GERA O CERTIFICADO ECDSA
 function acme_sign() {
-	cct_run_acme=-1
-	ERR "$USETEST"
+	cct_run_acme=-1	
 
 	#while [[ ]]; do
 		if [[ $cct_run_acme -gt 1 ]]; then
