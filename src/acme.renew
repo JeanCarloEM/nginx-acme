@@ -138,8 +138,8 @@ fi
 #
 ATERNAMES="DNS:${_DOMINIO},DNS:*.$_DOMINIO"
 
-if [[ -f ${_CERT_PATH}/.alternativenames ]]; then
-	ATERNAMES="${ATERNAMES},DNS:$(cat ${_CERT_PATH}/.alternativenames | tr --delete '\r' | sed ':a;N;$!ba;s/\n/,DNS:/g')"
+if [[ ( -f ${_CERT_PATH}/.alternativenames ) && ( -s ${_CERT_PATH}/.alternativenames ) ]]; then
+	ATERNAMES="$(cat ${_CERT_PATH}/.alternativenames | tr --delete '\r' | sed ':a;N;$!ba;s/\s*\n/.${_DOMINIO}\n/g' | sed ':a;N;$!ba;s/\n/,DNS:/g' | sed 's/\s+//g')${_DOMINIO}"
 fi
 
 #
