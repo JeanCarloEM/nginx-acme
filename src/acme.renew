@@ -32,7 +32,7 @@ _CERT_PATH=$(getParam $* "-path")
 _CERT_TIPO=$(getParam $* "-t")
 _FORCE=$(getParam $* "-force")
 
-_LOG_PATH="/var/log/letsencrypt"
+_LOG_PATH="/var/log/acme"
 _ACME_PATH=""
 
 ######################

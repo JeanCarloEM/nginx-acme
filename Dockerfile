@@ -27,8 +27,23 @@ ENV DOMFOLDER="/var/www"
 
 # ON INSTALL
 RUN apk update && \
-    apk add --no-cach curl openrc socat nano htop gzip busybox-initscripts && \
+    apk add --no-cach curl openrc socat nano gzip busybox-initscripts logrotate && \
     apk del openssl && apk add openssl3 && ln -s /usr/bin/openssl3 /usr/bin/openssl && \
+    echo "/var/log/*.log /var/log/*/*.log /var/log/*/*/*.log {\
+        daily\
+        rotate 14\
+        size 5k\
+        dateext\
+        dateformat -%Y-%m-%d\
+        missingok\
+        compress\
+        delaycompress\
+        sharedscripts\
+        notifempty\
+        postrotate\
+            test -r /var/run/nginx.pid && kill -USR1 `cat /var/run/nginx.pid`\
+        endscript\
+    }" > /etc/logrotate.d/nginx && \
     yes | rm -rf /etc/nginx/conf.d/* && \    
     chmod +x /etc/nginx/.acme.renew && \
     chmod +x /etc/nginx/acme.renew && \
